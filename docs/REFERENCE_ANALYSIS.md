@@ -82,26 +82,41 @@ This is the closest reference to EMBERFALL's real-time core.
 
 ## 4. Death Howl
 
-### Build observation
+### Build verification
 
-The archive directory indicates a Windows Unity Mono build with `MonoBleedingEdge`, `Assembly-CSharp.dll`, FMOD and Rewired, plus many Unity level files. However, the uploaded `Death Howl.zip` reports that it is the last disk of a multi-part ZIP archive. Earlier volumes are missing, so internal extraction is not reliable and no deeper package inspection is recorded here.
+The two supplied volumes, `Death Howl.z01` and `Death Howl.zip`, form a complete split archive. They were joined into a temporary inspection copy and the full archive integrity test completed without compressed-data errors. No executable or game DLL was run.
+
+The build is a Windows Unity Mono release using Unity `2022.3.62f2`. The package contains `MonoBleedingEdge`, `Assembly-CSharp.dll`, Rewired, FMOD, Unity AI Navigation, Burst, Collections, Mathematics, 2D Animation, Tilemap and related runtime assemblies.
+
+The Unity build settings expose 60 scenes. Four are system scenes (`CompanyLogos`, `TitleMenu`, `Credits`, and a persistent `Main (Managers)` scene), while 56 are world-part scenes covering outdoor regions, caves, special arenas and post-game spaces. This strongly indicates a persistent-manager plus additive/streamed-region architecture rather than one monolithic world scene.
+
+Safe metadata inspection of `Assembly-CSharp.dll` exposes a highly modular project layout. Approximately 759 source-path identifiers are present, grouped heavily around UI, Cards, Characters, CombatSystem, Exploration, Map, Audio, Weather, GameData and WorldInfrastructure. Important architectural classes include separate `PlayerExplorationController` and `PlayerCombatController`, `CombatEntityManager`, `CombatDeckHandler`, `EnemyAI`, movement modules, `GridManager`, `Pathfinding`, `FogOfWarHandler`, `RegionDataManager`, `RegionStreaming`/world-loading components, and save/profile systems.
+
+Enemy movement is not represented as one universal chase routine: the build contains separate movement modules for jumping, line-of-sight seeking and teleportation, alongside enemy-specific combat-turn handlers. Bosses also have dedicated flow/state classes and multi-part behavior. These identifiers support the general design conclusion that enemies and bosses are implemented as distinct behavior patterns rather than only stat variants.
+
+The card system is similarly separated into card-data and card-effect layers, with many reusable effect types. EMBERFALL should not adopt Death Howl's card combat, but the reusable-effect architecture is relevant to our planned skill-tag and event-hook system.
 
 ### Public gameplay characteristics
 
-Death Howl is an open-world tactical deckbuilder built around deliberate enemy patterns, grid positioning, build archetypes and a punishing-but-readable death loop. Public developer commentary emphasizes pattern recognition and learning enemy behavior.
+Death Howl is an open-world tactical deckbuilder built around deliberate enemy patterns, grid positioning, build archetypes and a punishing-but-readable death loop. Its central combat value for EMBERFALL is learnable pattern design, not the turn-based format itself.
 
 ### What EMBERFALL should learn
 
-- Difficult attacks should remain readable and learnable.
-- Elite and boss enemies need recognizable identities rather than only more HP and damage.
-- Future chapters can have distinct regions and encounter rules.
-- Death can teach the player something about the next attempt.
+- Separate exploration control from combat/simulation responsibilities instead of growing one giant controller.
+- Treat future biomes as region modules with their own encounters, visuals and rules rather than a single endlessly decorated map.
+- Use a persistent world/run manager and load or generate region content around it.
+- Give enemy families different movement logic and attack identities instead of only changing speed, HP and damage.
+- Give bosses explicit phase/flow controllers and multi-step attacks with readable telegraphs.
+- Build skills from reusable effect primitives, tags and hooks so combinations can scale without hard-coding every skill pair.
+- Keep map discovery, landmarks and optional encounters as first-class adventure systems.
+- Preserve readable danger indicators before strong attacks.
 
 ### What EMBERFALL should not copy
 
 - Turn-based grid combat
-- Card/deck structure
-- Narrative, characters, world, enemy designs or proprietary systems
+- Card/deck structure or proprietary card effects
+- Scene layouts, region names, narrative, characters, enemy designs, art, audio or other runtime assets
+- Decompiled or extracted source implementation
 
 ## Combined design target for EMBERFALL
 
@@ -111,15 +126,16 @@ The desired blend is:
 - **Run pacing:** fast action-survival escalation similar in principle to Megabonk.
 - **Adventure layer:** exploration choices under a looming boss timer, inspired by the design principle seen in He is Coming.
 - **Build depth:** strongly interacting upgrades inspired by the combinatorial philosophy of 9 Kings.
-- **Enemy mastery:** telegraphed, learnable enemy and boss patterns inspired by the design philosophy discussed around Death Howl.
+- **Enemy mastery:** telegraphed, learnable enemy and boss patterns inspired by Death Howl's design philosophy and modular behavior structure.
+- **World structure:** future chapters/biomes should be modular regions with landmarks, optional encounters and clear transitions rather than one giant undifferentiated arena.
 
-This combination should remain an original real-time Web roguelike rather than reproducing any one reference game.
+This combination must remain an original real-time Web roguelike rather than reproducing any one reference game.
 
 ## Recommended implementation order
 
-1. Enemy finite-state behavior and blocked-path recovery.
-2. Skill tags, hooks and synergy rules.
-3. Three to five procedural points-of-interest.
+1. Enemy finite-state behavior and pluggable movement/attack patterns.
+2. Skill tags, hooks and reusable effect primitives.
+3. Three to five procedural points-of-interest in the current biome.
 4. Elite encounters tied to optional rewards.
-5. Boss phase overhaul with clear telegraphs.
-6. Additional biome/chapter after the first loop is polished.
+5. Boss phase overhaul with clear telegraphs and multi-step patterns.
+6. Region/biome abstraction for a second chapter after the first loop is polished.
