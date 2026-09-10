@@ -15,11 +15,14 @@
 | --- | --- |
 | `dist/js/data.js` | Balance constants, enemy definitions, rarity data and skill registry |
 | `dist/js/world.js` | Seeded randomness, terrain generation, obstacle collision and spatial hash |
-| `dist/js/engine.js` | DOM-independent simulation, combat, enemy behavior, progression and run state |
+| `dist/js/engine.js` | DOM-independent simulation, combat orchestration, progression and run state |
+| `dist/js/ai.js` | Enemy state transitions, attack timing, pursuit, spacing and blocked-path recovery |
+| `dist/js/synergies.js` | Build-combination requirements and active combat modifiers |
+| `dist/js/encounters.js` | Seeded points of interest and encounter reward effects |
 | `dist/js/renderer.js` | Canvas drawing, camera, terrain cache, culling and minimap |
 | `dist/js/input.js` | Keyboard and touch input abstraction |
 | `dist/js/audio.js` | User-gesture unlocked Web Audio and rate limiting |
-| `dist/js/main.js` | UI binding, fixed-step loop, HUD and state overlays |
+| `dist/js/main.js` | UI binding, fixed-step loop, HUD, announcements and state overlays |
 
 ## Architectural constraints
 
@@ -31,39 +34,56 @@
 6. Mobile and desktop controls must share the same action interface.
 7. Random generation must remain seedable for reproducible tests.
 
-## Planned system improvements
+## Implemented gameplay foundations
 
 ### Enemy state machine
 
-The current enemy logic is compact and functional, but future expansion should make state explicit. Recommended states:
+Enemy behavior is now delegated to `ai.js` and uses explicit runtime states:
 
-- idle / spawn
-- acquire target
-- pursue / reposition
-- attack wind-up
-- attack active
-- recovery / cooldown
-- hit reaction
-- blocked-path recovery
-- death
+- `spawn`
+- `pursue`
+- `reposition`
+- `windup`
+- `recover`
+- `dead` reserved for later expansion
 
-Boss behavior should use a separate pattern/state controller so new phases can be added without expanding one large update loop indefinitely.
+The AI preserves existing melee, shaman and boss attack timing while adding blocked-path detection. Enemies that repeatedly fail to make progress enter a short lateral reposition state instead of continuously pushing into the same obstacle.
 
-### Skill and modifier pipeline
+Future enemy types should extend behavior through composable movement and attack policies rather than growing the main engine loop again.
 
-Move toward declarative effects and tags so synergies can be expressed without hard-coding every pair. Example concepts:
+### Skill synergy pipeline
 
-- tags: `fire`, `projectile`, `explosion`, `defense`, `movement`, `orbit`
-- additive and multiplicative stat modifiers
-- event hooks: `onCast`, `onHit`, `onKill`, `onDash`, `onPickup`, `onBossSpawn`
-- prerequisite / exclusion rules
-- rarity-specific effect strength
+`synergies.js` evaluates owned-skill requirements and exposes aggregated combat modifiers. Three initial working combinations exist:
+
+- `烈焰齊射`: Multi-shot + Blast increases splash damage.
+- `霜穿長槍`: Frost + Pierce increases direct damage against already slowed enemies.
+- `餘燼壁壘`: Orbit + Ward increases orbiting-fire damage.
+
+The engine records awakened synergy IDs so the same combination only announces once per run.
+
+Future expansion should add effect tags and event hooks such as `onCast`, `onHit`, `onKill`, `onDash`, `onPickup` and `onBossSpawn` before the synergy catalog grows large.
 
 ### World encounters
 
-Future points of interest should be generated independently from static decoration and collision obstacles. An encounter service should own spawn rules for shrines, ruins, elites, chests or relic events.
+`encounters.js` generates seeded points of interest separately from terrain decoration and collision obstacles. The first three encounter types are:
 
-### Performance
+- `餘燼祭壇`: raises maximum HP and heals.
+- `失落靈匣`: grants immediate XP.
+- `灰誓祭壇`: trades a small amount of HP for permanent run damage.
+
+Encounter markers are stationary and do not use the XP magnet behavior. Reaching a marker resolves it once and emits an event for UI feedback.
+
+This is the base for later shrines, ruins, elite challenges, relic events and chapter-specific landmarks.
+
+## Next structural work
+
+1. Split boss behavior into its own pattern/phase controller.
+2. Add reusable enemy movement and attack policy objects before introducing many new archetypes.
+3. Give encounters dedicated rendering instead of sharing the current crystal visual language.
+4. Add a region/biome layer above seeded world generation.
+5. Expand the synergy system with tags and event hooks rather than hard-coded pair logic.
+
+## Performance
 
 Keep the existing bounded-collection approach. Continue using spatial partitioning, viewport culling, capped DPR and a fixed simulation step. Avoid allocating temporary arrays in high-frequency combat paths where possible.
 
@@ -74,8 +94,11 @@ Keep deterministic simulation tests for:
 - seeded world generation
 - obstacle collision
 - enemy attack timing and damage
+- enemy state transitions and blocked recovery
 - projectile hit behavior
 - skill selection / rarity
+- synergy activation and combat modifiers
+- deterministic encounter generation and reward resolution
 - boss spawn and phase behavior
 - death / restart
 - dash invulnerability
