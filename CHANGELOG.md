@@ -23,4 +23,6 @@ All notable EMBERFALL project changes should be recorded here.
 
 - No gameplay code was changed in this documentation pass.
 - The first three supplied reference archives were confirmed to be Windows Unity IL2CPP builds rather than Unity source projects.
-- The Death Howl archive identifies itself as the last disk of a multi-part ZIP and requires the missing earlier volumes for reliable internal extraction.
+- The `Death Howl.z01` + `Death Howl.zip` split archive was successfully joined for temporary inspection and passed a full compressed-data integrity test.
+- Death Howl was confirmed as a Unity `2022.3.62f2` Mono build with 60 scenes, including 56 world-part scenes, and modular runtime systems for exploration, combat, cards, map/world streaming, enemy AI, input, audio and saves.
+- Only structural metadata and general design patterns were analyzed; no executable was run and no third-party source implementation or assets were copied into EMBERFALL.
