@@ -1,0 +1,26 @@
+name: Verify EMBERFALL
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install
+        run: npm install --ignore-scripts
+      - name: Check local assets and JavaScript syntax
+        run: npm run check
+      - name: Run gameplay tests
+        run: npm test
