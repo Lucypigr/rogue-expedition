@@ -16,7 +16,7 @@
 - Preserve automatic targeting / automatic basic casting.
 - Player manually controls movement and dash.
 - Runs target about 4–6 minutes.
-- The Ashen Guardian currently appears after 03:00.
+- The Ashen Guardian appears after 03:00 and now uses three HP-driven combat phases.
 - Level-ups offer three randomized skills.
 - Skill rarity uses common / rare / epic tiers.
 - The world is procedurally arranged and includes terrain collision.
@@ -61,14 +61,26 @@ The supplied archives are Windows Unity builds, not Unity source projects. They 
 
 ### Enemy AI
 
-- Enemy behavior has been moved out of the main simulation loop into `dist/js/ai.js`.
-- Runtime states now include spawn, pursue, reposition, wind-up and recovery.
-- Existing melee, shaman and boss attacks still use real telegraphs and damage windows.
+- Enemy behavior lives in `dist/js/ai.js` rather than the main simulation loop.
+- Runtime states now include spawn, pursue, flank, kite, reposition, wind-up and recovery.
+- Crawlers keep direct pursuit and short melee timing.
+- Runners flank and can begin a stored-direction charge from farther away.
+- Shamans maintain a ranged band by approaching, retreating or strafing.
+- Brutes use a slower heavy wind-up and heavier contact damage.
 - Blocked enemies can enter a short sidestep recovery instead of continuously pushing into terrain.
+- A phase-two regression found that movement could overwrite `recover` one frame after an attack; this was fixed so recovery remains explicit until cooldown ends.
+
+### Boss phases
+
+- `dist/js/boss.js` is a dedicated Ashen Guardian controller.
+- Stage 1 `甦醒`: baseline movement and alternating radial/aimed patterns.
+- Stage 2 `焚心`: begins at 66% HP, with faster movement, shorter cadence and denser attacks.
+- Stage 3 `末焰`: begins at 33% HP, with the highest movement pressure and shortest attack cadence.
+- Phase changes emit `bossPhase` events and reset the local pattern sequence.
 
 ### Skill synergies
 
-- `dist/js/synergies.js` now evaluates combinations of owned upgrades.
+- `dist/js/synergies.js` evaluates combinations of owned upgrades.
 - `烈焰齊射`: Multi-shot + Blast raises splash damage.
 - `霜穿長槍`: Frost + Pierce raises direct damage against already slowed enemies.
 - `餘燼壁壘`: Orbit + Ward raises orbiting-fire damage.
@@ -78,23 +90,24 @@ The supplied archives are Windows Unity builds, not Unity source projects. They 
 
 - `dist/js/encounters.js` generates three seeded points of interest per run.
 - Current events: 餘燼祭壇, 失落靈匣 and 灰誓祭壇.
-- Encounter markers stay fixed instead of being pulled by the XP magnet.
+- Each encounter has its own glyph and accent presentation.
+- `main.js` shows screen-space route markers tied to the world position. Off-screen encounters clamp to the screen edge; long labels are hidden on narrow/mobile layouts.
+- Encounter markers remain fixed instead of being pulled by the XP magnet.
 - Reaching an encounter resolves a real run effect and emits UI feedback.
 
 ## Verification status
 
 - Before the gameplay-foundations refactor, the original automated suite passed 11/11 tests under Node.js 22.16.0.
-- After the refactor, the expanded suite passes 15/15 tests.
+- After phase 1, the expanded suite passed 15/15 tests.
+- After phase 2, the expanded suite passes 20/20 tests.
 - The 230-second bounded full-run simulation still passes.
-- All modified JavaScript files pass `node --check`.
-- Physical iOS/Android touch behavior, browser-specific audio and responsive layout still require real-device re-verification after this branch is deployed.
+- Modified gameplay/UI JavaScript files pass `node --check`.
+- Physical iOS/Android touch behavior, browser-specific audio and the DOM marker layout still require real-browser/device re-verification after deployment.
 
 ## Next engineering priorities
 
-1. Give exploration encounters dedicated art/markers and clearer route guidance.
-2. Split the Ashen Guardian into a dedicated boss phase/pattern controller.
-3. Add reusable movement/attack policy modules before creating more enemy archetypes.
-4. Expand synergy logic with tags and event hooks instead of accumulating pair-specific conditions.
-5. Add optional elite encounters and stronger risk/reward world choices.
-6. Add a region/biome abstraction before building a second chapter.
-7. Re-run automated tests and desktop/mobile checks after each gameplay change.
+1. Add optional elite encounters so exploration can produce meaningful risk/reward choices.
+2. Expand the synergy system with tags and event hooks instead of accumulating pair-specific conditions.
+3. Add stronger telegraph art/animation for runner charges, brute heavy attacks and boss phase transitions.
+4. Add a region/biome abstraction before building a second chapter.
+5. Re-run automated tests and desktop/mobile checks after each gameplay change.
