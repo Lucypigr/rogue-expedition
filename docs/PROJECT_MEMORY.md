@@ -5,6 +5,7 @@
 - Name: `燼境 · EMBERFALL`
 - Repository: `Lucypigr/rogue-expedition`
 - Primary branch: `main`
+- Active development branch: `feature/gameplay-foundations-20260910`
 - Product: short-session Web action roguelike / survival adventure
 - Primary targets: desktop browsers and mobile browsers
 - Current implementation: HTML, CSS and native JavaScript ES modules
@@ -56,16 +57,44 @@ The supplied archives are Windows Unity builds, not Unity source projects. They 
 - Relevant structural lessons for EMBERFALL: separate exploration from combat responsibilities; use modular enemy movement/attack behaviors; use explicit boss flow/phases; use reusable skill/effect primitives; design future biomes as region modules with landmarks and optional encounters.
 - Do not copy Death Howl's turn-based grid combat, card/deck content, proprietary classes, assets, layouts, narrative or source implementation.
 
-## Current repository status observed on 2026-09-10
+## Implemented gameplay foundations on 2026-09-10
 
-The `main` branch contains a modular Web build under `dist/`, automated Node tests, a project check script and documentation in `README.md`. The latest observed commit before this documentation branch was `8a5bf3691f314f9da879dcec6067a1ad062bf2c7` (`Build Emberfall: complete desktop and mobile survival roguelike`).
+### Enemy AI
+
+- Enemy behavior has been moved out of the main simulation loop into `dist/js/ai.js`.
+- Runtime states now include spawn, pursue, reposition, wind-up and recovery.
+- Existing melee, shaman and boss attacks still use real telegraphs and damage windows.
+- Blocked enemies can enter a short sidestep recovery instead of continuously pushing into terrain.
+
+### Skill synergies
+
+- `dist/js/synergies.js` now evaluates combinations of owned upgrades.
+- `烈焰齊射`: Multi-shot + Blast raises splash damage.
+- `霜穿長槍`: Frost + Pierce raises direct damage against already slowed enemies.
+- `餘燼壁壘`: Orbit + Ward raises orbiting-fire damage.
+- Synergy awakening is recorded once per run and surfaced to the UI through events.
+
+### Exploration encounters
+
+- `dist/js/encounters.js` generates three seeded points of interest per run.
+- Current events: 餘燼祭壇, 失落靈匣 and 灰誓祭壇.
+- Encounter markers stay fixed instead of being pulled by the XP magnet.
+- Reaching an encounter resolves a real run effect and emits UI feedback.
+
+## Verification status
+
+- Before the gameplay-foundations refactor, the original automated suite passed 11/11 tests under Node.js 22.16.0.
+- After the refactor, the expanded suite passes 15/15 tests.
+- The 230-second bounded full-run simulation still passes.
+- All modified JavaScript files pass `node --check`.
+- Physical iOS/Android touch behavior, browser-specific audio and responsive layout still require real-device re-verification after this branch is deployed.
 
 ## Next engineering priorities
 
-1. Preserve current working baseline.
-2. Convert enemy behavior into clearer explicit states and pluggable movement/attack patterns before adding many more enemy types.
-3. Add skill synergy infrastructure using tags, hooks and reusable effects rather than only flat-stat upgrades.
-4. Add procedural exploration points of interest and optional elite encounters.
-5. Expand the boss into more readable phases and counterplay.
+1. Give exploration encounters dedicated art/markers and clearer route guidance.
+2. Split the Ashen Guardian into a dedicated boss phase/pattern controller.
+3. Add reusable movement/attack policy modules before creating more enemy archetypes.
+4. Expand synergy logic with tags and event hooks instead of accumulating pair-specific conditions.
+5. Add optional elite encounters and stronger risk/reward world choices.
 6. Add a region/biome abstraction before building a second chapter.
-7. Re-run automated tests and browser/mobile checks after each gameplay change.
+7. Re-run automated tests and desktop/mobile checks after each gameplay change.
