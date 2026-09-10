@@ -2,6 +2,30 @@
 
 All notable EMBERFALL project changes should be recorded here.
 
+## 2026-09-10 — Gameplay foundations phase 2
+
+### Added
+
+- `dist/js/boss.js` with a dedicated three-stage Ashen Guardian controller.
+- Boss phases at >66% HP, 66–33% HP and <33% HP, with progressively shorter wind-up/cooldown, higher movement pressure and distinct attack patterns.
+- Explicit `flank` behavior for runners and `kite` behavior for shamans.
+- Runner charge attacks from extended range and slower heavy wind-up attacks for brutes.
+- Distinct encounter presentation metadata for 餘燼祭壇, 失落靈匣 and 灰誓祭壇.
+- Screen-space exploration markers that track world locations, clamp to screen edges when off-screen and hide long labels on narrow/mobile layouts.
+- Boss phase announcements and chapter text updates in the HUD.
+- Five additional automated tests covering archetype movement states, runner/brute attack timing, boss phase transitions, escalating boss cadence and encounter presentation uniqueness.
+
+### Fixed
+
+- Recovery state was briefly overwritten by movement-state selection on the frame after an attack. The state machine now preserves `recover` until its cooldown completes.
+
+### Verification
+
+- Expanded automated suite passes 20/20 tests under Node.js.
+- The original combat, progression, dash, boss completion and 230-second bounded simulation tests still pass.
+- `main.js`, `ai.js`, `boss.js`, `encounters.js` and `engine.js` pass `node --check`.
+- Browser DOM marker layout and physical iOS/Android touch behavior remain to be verified on real browsers/devices after deployment.
+
 ## 2026-09-10 — Gameplay foundations
 
 ### Added
