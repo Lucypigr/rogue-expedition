@@ -1,0 +1,1 @@
+{"name":"emberfall-roguelike","version":"1.0.0","private":true,"type":"module","description":"Expandable vanilla JavaScript survival roguelike","scripts":{"test":"node --test tests/*.test.js","check":"node scripts/check.mjs","start":"python3 -m http.server 8080 --directory dist"},"engines":{"node":">=20"}}

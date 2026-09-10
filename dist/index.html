@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#111916"><meta name="description" content="燼境：在隨機荒野中駕馭烈焰，組合技能，挑戰遠古守衛。桌面與手機皆可遊玩。"><title>燼境 · EMBERFALL</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<header class="topbar"><a class="brand" href="./" aria-label="燼境首頁"><span class="brand-mark">✧</span> EMBERFALL <span class="brand-cn">燼境</span></a><div class="topright"><span class="edition">ROGUELIKE / VOL. 01</span><button id="sound" class="icon-button" aria-label="切換音效" title="切換音效">♫</button><button id="pause" class="icon-button" aria-label="暫停遊戲" title="暫停 Esc">Ⅱ</button></div></header>
+<main id="shell">
+<section class="arena" aria-label="遊戲區域">
+<canvas id="game" aria-label="使用 WASD、方向鍵或手機搖桿移動，自動攻擊敵人"></canvas>
+<div class="hud" id="hud"><div class="vitals"><div class="hud-label"><span>流浪術士</span><span id="hpText">100 / 100</span></div><div class="health-track"><div id="hpFill"></div></div><div class="level-line"><span id="levelText">LV. 01</span><div class="xp-track"><div id="xpFill"></div></div><span id="xpText">0 / 12</span></div></div><div class="time-panel"><span class="eyebrow" id="phaseText">第一章 · 甦醒之森</span><strong id="timer">00:00</strong><span id="killText">擊敗 0</span></div></div>
+<div id="bossHud" class="boss-hud hidden"><div><span>♜ 灰燼守衛</span><span id="bossHp"></span></div><div class="boss-track"><i id="bossFill"></i></div></div>
+<div id="announcement" role="status"></div>
+<div class="world-tag"><span class="tiny-cross">＋</span> ASHEN WILDS <span>灰燼荒野</span></div>
+<div class="mobile-controls" id="touchControls"><div id="joystick" aria-label="移動搖桿"><span id="stick"></span></div><button id="dashTouch" aria-label="衝刺">↟<small>衝刺</small></button></div>
+<div id="overlay" class="overlay"></div>
+<div class="arena-bottom"><span><i class="live-dot"></i> <span id="seedText">隨機世界</span></span><span id="dashState">SPACE · 衝刺就緒</span></div>
+</section>
+<aside class="sidebar"><div class="chapter"><span class="eyebrow">THE EXPEDITION</span><h2>荒野遠征</h2><p>火光未滅，旅途未盡。</p></div><div class="objective"><span class="section-label">本局目標 <span>01—03</span></span><ol><li id="obj1" class="active"><b>01</b><div>在荒野中存活<small>收集靈晶，強化你的法術</small></div></li><li id="obj2"><b>02</b><div>迎戰灰燼守衛<small>存活 03:00 後出現</small></div></li><li id="obj3"><b>03</b><div>讓火光重燃<small>擊敗守衛，完成遠征</small></div></li></ol></div><div class="loadout"><span class="section-label">法術與遺物 <span id="skillCount">1</span></span><div id="skillList"></div><div class="rarity-key"><span>● 普通</span><span>● 稀有</span><span>● 史詩</span></div></div><div class="controls-guide"><span class="section-label">旅人手冊</span><p><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / 方向鍵 <span>移動</span></p><p><kbd>SPACE</kbd><span>衝刺 · 短暫無敵</span></p><p><kbd>ESC</kbd><span>暫停 / 繼續</span></p><div class="auto-note">✧ 法術自動鎖定附近敵人<br><span>靠近靈晶即可拾取經驗值。</span></div></div></aside>
+</main><footer><span>每一次重來，都是新的可能。</span><span>EMBERFALL <span class="footer-divider">/</span> 生存・成長・重燃</span></footer>
+<script type="module" src="js/main.js"></script></body></html>
