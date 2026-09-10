@@ -45,11 +45,16 @@ The supplied archives are Windows Unity builds, not Unity source projects. They 
 - `Megabonk`: action-survival pacing, random upgrades, rarity, escalating builds, map pressure.
 - `He is Coming`: exploration with an approaching boss threat, preparation choices, points of interest.
 - `9 Kings`: combinatorial stacking and satisfying build synergies.
-- `Death Howl`: readable enemy patterns, deliberate counterplay and future region structure.
+- `Death Howl`: readable enemy patterns, deliberate counterplay, modular exploration/combat separation and future region structure.
 
-## Known reference-file limitation
+## Death Howl verified build notes
 
-The uploaded `Death Howl.zip` identifies itself as the final disk of a multi-part ZIP archive and is missing earlier volumes. Its central directory can be listed, but its internal files cannot be reliably extracted until the missing parts are supplied.
+- The supplied `Death Howl.z01` + `Death Howl.zip` pair is complete; the merged 755 MB inspection archive passes a full compressed-data integrity test.
+- The build uses Unity `2022.3.62f2` with the Mono scripting backend.
+- The build exposes 60 scenes, including a persistent manager scene and 56 world-part scenes.
+- Safe assembly metadata shows separate systems for Exploration, CombatSystem, Cards, Map, WorldInfrastructure, Characters/AI, Audio and save/profile handling.
+- Relevant structural lessons for EMBERFALL: separate exploration from combat responsibilities; use modular enemy movement/attack behaviors; use explicit boss flow/phases; use reusable skill/effect primitives; design future biomes as region modules with landmarks and optional encounters.
+- Do not copy Death Howl's turn-based grid combat, card/deck content, proprietary classes, assets, layouts, narrative or source implementation.
 
 ## Current repository status observed on 2026-09-10
 
@@ -58,8 +63,9 @@ The `main` branch contains a modular Web build under `dist/`, automated Node tes
 ## Next engineering priorities
 
 1. Preserve current working baseline.
-2. Convert enemy behavior into clearer explicit states before adding many more enemy types.
-3. Add skill synergy infrastructure rather than only adding flat-stat upgrades.
-4. Add procedural exploration points of interest.
+2. Convert enemy behavior into clearer explicit states and pluggable movement/attack patterns before adding many more enemy types.
+3. Add skill synergy infrastructure using tags, hooks and reusable effects rather than only flat-stat upgrades.
+4. Add procedural exploration points of interest and optional elite encounters.
 5. Expand the boss into more readable phases and counterplay.
-6. Re-run automated tests and browser/mobile checks after each gameplay change.
+6. Add a region/biome abstraction before building a second chapter.
+7. Re-run automated tests and browser/mobile checks after each gameplay change.
