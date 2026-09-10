@@ -18,12 +18,14 @@ All notable EMBERFALL project changes should be recorded here.
 ### Fixed
 
 - Recovery state was briefly overwritten by movement-state selection on the frame after an attack. The state machine now preserves `recover` until its cooldown completes.
+- GitHub Actions verification no longer enables npm caching or runs an unnecessary install step in this dependency-free project; the previous cache configuration failed before tests because no lock file exists.
 
 ### Verification
 
 - Expanded automated suite passes 20/20 tests under Node.js.
 - The original combat, progression, dash, boss completion and 230-second bounded simulation tests still pass.
 - `main.js`, `ai.js`, `boss.js`, `encounters.js` and `engine.js` pass `node --check`.
+- GitHub Actions successfully completed `npm run check` and `npm test` on commit `da7b7cda922b0b4d76f1d5c64b929904d4020799` after the CI fix.
 - Browser DOM marker layout and physical iOS/Android touch behavior remain to be verified on real browsers/devices after deployment.
 
 ## 2026-09-10 — Gameplay foundations
