@@ -23,6 +23,9 @@ export function drawExtraEnemy(c,e,clock){
  c.restore();return true;
 }
 export function drawGemEffects(c,game){
+ for(const f of game.fields||[]){c.save();c.globalAlpha=.25;c.fillStyle=f.skill.color;c.beginPath();c.arc(f.x,f.y,f.skill.radius,0,TAU);c.fill();c.globalAlpha=.8;c.strokeStyle=f.skill.color;c.lineWidth=2;c.beginPath();c.arc(f.x,f.y,f.type==='ball'?18:f.skill.radius*.7,game.time,game.time+5);c.stroke();c.restore()}
+ for(const t of game.totems||[]){poly(c,[[t.x-10,t.y+5],[t.x-8,t.y-20],[t.x+8,t.y-20],[t.x+10,t.y+5]],'#b89a62');circle(c,t.x,t.y-25,7,'#efb86c')}
+
  for(const m of game.meteors){c.strokeStyle=m.skill.color;c.lineWidth=2;c.setLineDash([5,5]);c.beginPath();c.arc(m.x,m.y,m.skill.radius,0,TAU);c.stroke();c.setLineDash([]);const y=m.y-m.timer*190;circle(c,m.x,y,9,m.skill.color);c.strokeStyle=m.skill.color;c.beginPath();c.moveTo(m.x,y);c.lineTo(m.x+25,y-60);c.stroke()}
  for(const fx of game.effects){c.save();c.globalAlpha=Math.max(0,fx.life/fx.max);c.strokeStyle=fx.color;c.lineWidth=fx.type==='arc'?3:2;
   if(fx.type==='arc'){c.beginPath();c.moveTo(fx.x,fx.y);for(let i=1;i<6;i++){const t=i/6;c.lineTo(fx.x+(fx.tx-fx.x)*t+(i%2?8:-8),fx.y+(fx.ty-fx.y)*t)}c.lineTo(fx.tx,fx.ty);c.stroke();c.strokeStyle='#effaff';c.lineWidth=1;c.stroke()}

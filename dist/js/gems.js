@@ -19,7 +19,33 @@ export const SUPPORT_GEMS = {
   leech: {name:'生命偷取',icon:'♥',tags:['hit'],desc:'命中回復傷害的 3%；每秒最多回復 8 點。',apply:s=>s.leech=.03},
   execute: {name:'撲殺',icon:'✧',tags:['hit'],desc:'命中生命低於 10% 的敵人直接擊殺，包含 Boss。',apply:s=>s.execute=true}
 };
-export const DEFAULT_LINKS=[{active:'fireball',supports:['multi','pierce',null]},{active:'arc',supports:['chain','swift',null]},{active:'nova',supports:['area',null,null]}];
+Object.assign(ACTIVE_GEMS,{
+ spark:{name:'靈電火花',icon:'ϟ',color:'#e5d987',socket:'B',tags:['spell','projectile','hit'],desc:'三道電火花扇射，碰到地形反彈。',damage:16,rate:1.3,speed:280,count:3,ricochet:3},
+ ball:{name:'雷鳴法球',icon:'◉',color:'#c3bbfa',socket:'B',tags:['spell','projectile','area','duration','hit'],desc:'緩慢前進的雷球，每 0.3 秒電擊周圍敵人。',damage:14,rate:.55,speed:90,radius:88,duration:4},
+ poison:{name:'腐蝕箭',icon:'➶',color:'#b2cf7c',socket:'G',tags:['projectile','hit'],desc:'毒箭命中後侵蝕 3 秒。',damage:25,rate:1.5,speed:430,poison:.3},
+ frostbomb:{name:'霜爆',icon:'❆',color:'#a4e5ed',socket:'B',tags:['spell','area','hit'],desc:'在目標處埋下冰爆，1 秒後凍傷並緩速。',damage:80,rate:.55,radius:125,slow:.55},
+ bladefall:{name:'刃雨',icon:'⋮',color:'#cdd7c0',socket:'G',tags:['spell','area','hit'],desc:'三波刀刃依序落下，覆蓋目標附近。',damage:35,rate:.65,radius:75},
+ totem:{name:'烈焰圖騰',icon:'♜',color:'#f1bd7a',socket:'R',tags:['spell','duration','hit'],desc:'召喚持續 5 秒的圖騰，每 0.6 秒發射火焰。',damage:20,rate:.24,duration:5},
+ shockwave:{name:'裂地震波',icon:'≋',color:'#dbb689',socket:'R',tags:['area','hit'],desc:'朝敵人方向釋放扇形衝擊，擊退近敵。',damage:65,rate:.85,radius:185,knockback:24},
+ cyclone:{name:'旋風斬',icon:'↻',color:'#d3dcc3',socket:'G',tags:['area','duration','hit'],desc:'持續切割自身周圍敵人，每秒攻擊 4 次。',damage:14,rate:4,radius:72},
+ spectral:{name:'靈刃投擲',icon:'†',color:'#9dd9bb',socket:'G',tags:['projectile','hit'],desc:'穿透靈刃飛出後折返，回程可再次命中。',damage:27,rate:1.15,speed:310,pierce:20,returning:true},
+ magma:{name:'熔岩彈',icon:'●',color:'#f2a56d',socket:'R',tags:['spell','projectile','area','hit'],desc:'爆炸熔岩彈會連鎖彈向另外兩個敵人。',damage:35,rate:1.05,speed:290,blast:45,chain:2},
+ blizzard:{name:'暴風雪',icon:'❋',color:'#a8d8eb',socket:'B',tags:['spell','area','duration','hit'],desc:'在目標位置留下 3 秒冰雪，每半秒造成傷害。',damage:18,rate:.4,radius:125,duration:3,slow:.3},
+ barrage:{name:'疾風連射',icon:'⋙',color:'#d9c394',socket:'G',tags:['projectile','hit'],desc:'短時間連射四箭，適合集中攻擊首領。',damage:15,rate:.9,speed:490}
+});
+Object.assign(SUPPORT_GEMS,{
+ poison:{name:'毒化',icon:'☣',socket:'G',tags:['hit'],desc:'命中附加 3 秒腐蝕，每秒為命中傷害 18%。',apply:s=>s.poison=Math.max(s.poison,.18)},
+ knockback:{name:'擊退',icon:'»',socket:'R',tags:['hit'],desc:'命中將普通敵人推離 22 距離；首領減半。',apply:s=>s.knockback+=22},
+ duration:{name:'持續延長',icon:'◷',socket:'R',tags:['duration'],desc:'持續技能的存在時間延長 60%。',apply:s=>s.duration*=1.6},
+ velocity:{name:'高速投射',icon:'➠',socket:'G',tags:['projectile'],desc:'投射物速度 +50%、傷害 +10%。',apply:s=>{s.speed*=1.5;s.damage*=1.1}},
+ concentrate:{name:'集中效應',icon:'⊙',socket:'B',tags:['area'],desc:'範圍半徑降低 25%，傷害增加 45%。',apply:s=>{s.radius*=.75;s.blast*=.75;s.damage*=1.45}},
+ critical:{name:'精準暴擊',icon:'✧',socket:'G',tags:['hit'],desc:'命中有 25% 機率造成雙倍傷害。',apply:s=>s.crit=.25},
+ chill:{name:'冰緩',icon:'❄',socket:'B',tags:['hit'],desc:'命中使敵人緩速至少 40%，持續 2 秒。',apply:s=>s.slow=Math.max(s.slow,.4)},
+ empower:{name:'強化',icon:'✦',socket:'R',tags:['hit'],desc:'每次命中傷害增加 25%。',apply:s=>s.damage*=1.25}
+});
+for(const [id,g] of Object.entries(ACTIVE_GEMS))g.socket??=id==='orbit'?'G':'B';
+for(const [id,g] of Object.entries(SUPPORT_GEMS))g.socket??=['multi','pierce','fork','chain','execute'].includes(id)?'G':['burn','leech'].includes(id)?'R':'B';
+export const DEFAULT_LINKS=[{active:'fireball',supports:[null,null,null]},{active:null,supports:[null,null,null]},{active:null,supports:[null,null,null]}];
 export function createLinks(source=DEFAULT_LINKS){return source.map(s=>({active:s.active,supports:[...s.supports]}))}
 export function compatible(active,support){const a=ACTIVE_GEMS[active],s=SUPPORT_GEMS[support];return !!a&&!!s&&s.tags.some(tag=>a.tags.includes(tag))}
 export function configureLink(links,index,kind,socket,value){
@@ -36,10 +62,12 @@ export function configureLink(links,index,kind,socket,value){
   if(links.some((l,i)=>l.supports.some((s,j)=>s===value&&(i!==index||j!==socket))))return {ok:false,reason:'這顆寶石已裝在其他插槽，請先卸下'};
   row.supports[socket]=value;return {ok:true};
 }
-export function compileSkill(row,player,levels={}){
+export function compileSkill(row,player,levels={},weapon=null){
+  if(!row?.active||!ACTIVE_GEMS[row.active])return null;
   const a=ACTIVE_GEMS[row.active],level=levels[row.active]||0;
-  const s={id:row.active,color:a.color,damage:a.damage*(player.damage/24)*(1+level*.12),rate:a.rate*(player.attackRate/1.8),speed:a.speed||380,radius:a.radius||0,blast:a.blast||0,count:1,pierce:a.pierce||0,chain:a.chain||0,slow:a.slow||0,fork:false,echo:false,burn:0,leech:0,execute:false};
+  const s={id:row.active,color:a.color,damage:a.damage*(player.damage/24)*(1+level*.12),rate:a.rate*(player.attackRate/1.8),speed:a.speed||380,radius:a.radius||0,blast:a.blast||0,count:a.count||1,pierce:a.pierce||0,chain:a.chain||0,slow:a.slow||0,fork:false,echo:false,burn:0,leech:0,execute:false,duration:a.duration||3,poison:a.poison||0,knockback:a.knockback||0,crit:0,ricochet:a.ricochet||0,returning:a.returning||false};
   for(const id of row.supports)if(id&&compatible(row.active,id))SUPPORT_GEMS[id].apply(s);
+  if(weapon&&a.tags.includes(weapon.bonus))s.damage*=1+weapon.power/100;
   return s;
 }
 export const GEM_PRESETS={

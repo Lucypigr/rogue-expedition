@@ -1,0 +1,96 @@
+import {ACTIVE_GEMS,SUPPORT_GEMS,configureLink} from './gems.js';
+export const SOCKET_COLORS={R:{name:'紅',hex:'#e28e7c'},G:{name:'綠',hex:'#aed591'},B:{name:'藍',hex:'#91ccec'},W:{name:'白',hex:'#eae6d3'}};
+export const CURRENCIES={chromatic:{name:'幻彩石',icon:'◉',desc:'重鑄孔洞顏色'},jeweller:{name:'匠魂石',icon:'❖',desc:'增加一個孔洞'},fusing:{name:'連結石',icon:'∞',desc:'增加一段連線'}};
+export const WEAPON_BASES=[{name:'燼火法杖',icon:'⚚',bonus:'spell',socket:'B'},{name:'裂風長弓',icon:'➶',bonus:'projectile',socket:'G'},{name:'斷岳戰斧',icon:'⚒',bonus:'area',socket:'R'},{name:'霜紋權杖',icon:'♜',bonus:'spell',socket:'B'},{name:'幽影匕首',icon:'†',bonus:'hit',socket:'G'},{name:'隕鐵重錘',icon:'✥',bonus:'area',socket:'R'}];
+export function gemSocket(id){return ACTIVE_GEMS[id]?.socket||SUPPORT_GEMS[id]?.socket||'B'}
+export function colorFits(socket,gem){return socket==='W'||socket===gemSocket(gem)}
+export function resetProgress(g){
+ g.round=1;g.roundTime=0;g.bossesDefeated=0;g.forgeUnlocked=false;g.rewardTaken=false;g.rewardOptions=[];g.levelReturn='playing';g.lootHistory=[];g.bag={active:['fireball'],support:[],weapons:[],currency:{chromatic:0,jeweller:0,fusing:0}};
+ const starter={id:'starter',name:'旅人的朽木杖',icon:'⚚',slot:'weapon',rarity:'common',bonus:'spell',power:0,sockets:['B','W'],linked:2};g.bag.weapons.push(starter);g.equipped=['starter',null,null,null,null];g.links=Array.from({length:5},(_,i)=>({active:i===0?'fireball':null,supports:[null,null,null]}));
+}
+export const EQUIPMENT_SLOTS=['weapon','weapon','weapon','cloak','legs'];
+export const SLOT_NAMES=['武器欄 01','武器欄 02','武器欄 03','披風','腿部'];
+export const DROP_RATES={normal:.03,boss:.8};
+export const ARMOR_BASES=[{slot:'cloak',name:'灰燼披風',icon:'◭',bonus:'spell'},{slot:'cloak',name:'暮影斗篷',icon:'◮',bonus:'hit'},{slot:'legs',name:'疾風護腿',icon:'♜',bonus:'projectile'},{slot:'legs',name:'隕鐵腿甲',icon:'♜',bonus:'area'}];
+export const gearType=w=>w.slot||'weapon';
+export const gearLabel=w=>`${w.name} · ${w.slot==='cloak'?'護甲 +'+w.armor:w.slot==='legs'?'移速 +'+w.speed+'%':w.power+'% 傷害'}`;
+export function equipmentStats(g){return g.equipped.reduce((v,_,i)=>{const w=weaponFor(g,i);v.armor+=w?.armor||0;v.speed+=w?.speed||0;return v},{armor:0,speed:0})}
+export function stashEquipment(g,w){
+ g.bag.weapons.push(w);
+ const empty=g.equipped.findIndex((id,i)=>!id&&EQUIPMENT_SLOTS[i]===gearType(w));
+ if(empty>=0)g.equipped[empty]=w.id;
+ if(g.bag.weapons.length>40){const at=g.bag.weapons.findIndex(v=>!g.equipped.includes(v.id)&&v.id!==w.id);if(at>=0){g.bag.weapons.splice(at,1);g.bag.currency.jeweller+=2}}
+}
+export function dropEquipment(g,boss=false){
+ if(g.rng()>=DROP_RATES[boss?'boss':'normal'])return null;
+ const pool=[...WEAPON_BASES,...ARMOR_BASES],base=pool[Math.floor(g.rng()*pool.length)];
+ const w=weaponReward(g,base).weapon;stashEquipment(g,w);
+ g.lootHistory.unshift(w);g.lootHistory.length=Math.min(8,g.lootHistory.length);
+ g.emit('gearDrop',w);return w;
+}
+export function rollLevelGems(g){
+ const pool=[...Object.entries(ACTIVE_GEMS).map(([id,a])=>({id,...a,kind:'active'})),...Object.entries(SUPPORT_GEMS).filter(([id])=>!g.bag.support.includes(id)).map(([id,a])=>({id,...a,kind:'support'}))];
+ // Prefer discoveries; once collected, active gems remain available as refinements.
+ const fresh=pool.filter(a=>!g.bag[a.kind].includes(a.id)),repeats=pool.filter(a=>g.bag[a.kind].includes(a.id));
+ const out=[];
+ while(out.length<3){const candidates=fresh.length?fresh:repeats;const a=candidates.splice(Math.floor(g.rng()*candidates.length),1)[0],r=g.rng(),rarity=r<.62?'common':r<.91?'rare':'epic',rank=rarity==='epic'?3:rarity==='rare'?2:1;
+ out.push({...a,rarity,rank,desc:`${SOCKET_COLORS[gemSocket(a.id)].name}色${a.kind==='active'?'主動':'輔助'}寶石 · ${a.desc}${a.kind==='active'?' · 精煉 +'+rank+'（每級傷害 +12%）':''}`})}
+ return out;
+}
+export function chooseLevelGem(g,index){
+ if(g.state!=='levelup'||!Number.isInteger(index)||!g.choices[index])return false;
+ const a=g.choices[index];if(!g.bag[a.kind].includes(a.id))g.bag[a.kind].push(a.id);
+ if(a.kind==='active')g.gemLevels[a.id]=(g.gemLevels[a.id]||0)+a.rank;
+ g.choices=[];g.state=g.levelReturn;g.checkLevel();g.emit('upgrade',a);return true;
+}
+export const weaponFor=(g,i)=>g.bag.weapons.find(w=>w.id===g.equipped[i]);
+export function configureOwned(g,i,kind,socket,value){
+ if(!['paused','build','reward','forge','camp'].includes(g.state))return{ok:false,reason:'請先暫停或在休息時裝備'};
+ const w=weaponFor(g,i);if(!w)return{ok:false,reason:'先在此欄位裝備對應裝備'};
+ if(kind==='active'&&value===null){g.links[i].active=null;g.links[i].supports=[null,null,null];return{ok:true}}
+ if(value){const owned=kind==='active'?g.bag.active:g.bag.support;if(!owned.includes(value))return{ok:false,reason:'尚未獲得這顆寶石'};const index=kind==='active'?0:socket+1;if(index>=w.sockets.length||index>=w.linked)return{ok:false,reason:'此孔尚未開啟或連結'};if(!colorFits(w.sockets[index],value))return{ok:false,reason:'寶石與孔洞顏色不同，須到工坊改色'}}
+ return configureLink(g.links,i,kind,socket,value);
+}
+export function equipWeapon(g,index,id){
+ if(!['paused','build','reward','forge','camp'].includes(g.state)||!Number.isInteger(index)||index<0||index>=EQUIPMENT_SLOTS.length)return{ok:false,reason:'無法在此時換裝'};
+ if(!g.bag.weapons.some(w=>w.id===id&&gearType(w)===EQUIPMENT_SLOTS[index])||g.equipped.some((v,i)=>i!==index&&v===id))return{ok:false,reason:'裝備類型不符、不存在或已裝備'};
+ g.equipped[index]=id;sanitize(g,index);return{ok:true};
+}
+export function sanitize(g,index){const w=weaponFor(g,index),row=g.links[index];if(!w||!row)return;if(row.active&&!colorFits(w.sockets[0],row.active)){row.active=null;row.supports.fill(null)}row.supports=row.supports.map((id,i)=>id&&i+1<w.sockets.length&&i+1<w.linked&&colorFits(w.sockets[i+1],id)?id:null)}
+function weaponReward(g,base){const b=base||WEAPON_BASES[Math.floor(g.rng()*WEAPON_BASES.length)],r=g.rng(),rarity=g.round>=8&&r>.6?'epic':r>.4?'rare':'common';const power=8+g.round*3+(rarity==='epic'?20:rarity==='rare'?10:0);const count=Math.min(4,2+(g.round>=4?1:0)+(rarity==='epic'?1:0));const weapon={...b,slot:b.slot||'weapon',armor:b.slot==='cloak'?2+Math.floor(power/8):0,speed:b.slot==='legs'?Math.min(25,5+Math.floor(power/4)):0,id:`weapon-${g.round}-${g.nextId++}`,rarity,power,sockets:Array.from({length:count},(_,i)=>i===0?'W':['R','G','B'][Math.floor(g.rng()*3)]),linked:Math.min(count,2)};return{kind:'weapon',weapon,name:weapon.name,icon:b.icon,rarity,desc:`${b.bonus==='spell'?'法術':b.bonus==='projectile'?'投射物':b.bonus==='area'?'範圍':'命中'}傷害 +${power}% · ${count} 孔 / ${weapon.linked} 連線`}}
+export function rollLoot(g){
+ const active=Object.keys(ACTIVE_GEMS).filter(id=>!g.bag.active.includes(id)),support=Object.keys(SUPPORT_GEMS).filter(id=>!g.bag.support.includes(id));
+ const choice=(ids,kind)=>{if(!ids.length)return{kind:'currency',name:'工匠通貨袋',icon:'◈',rarity:'rare',desc:'幻彩石 ×3、匠魂石 ×2、連結石 ×2'};const id=ids[Math.floor(g.rng()*ids.length)],a=(kind==='active'?ACTIVE_GEMS:SUPPORT_GEMS)[id];return{kind,id,name:a.name,icon:a.icon,rarity:g.round%5===0?'epic':'rare',desc:`${SOCKET_COLORS[gemSocket(id)].name}色${kind==='active'?'主動':'輔助'}宝石 · ${a.desc}`}};
+ return[choice(active,'active'),weaponReward(g),choice(support,'support')];
+}
+export function bossDefeated(g){
+ if(g.state!=='playing')return;g.bossesDefeated++;g.state='reward';g.rewardTaken=false;g.rewardOptions=rollLoot(g);g.bag.currency.chromatic+=2;g.bag.currency.jeweller+=1;g.bag.currency.fusing+=1;g.enemies=[];g.shots=[];g.hostile=[];g.zones=[];g.echoes=[];g.meteors=[];g.fields=[];g.totems=[];g.player.hp=Math.min(g.player.maxHp,g.player.hp+g.player.maxHp*.35);g.emit('sound','win');g.checkLevel();if(g.state==='reward')g.emit('reward');
+}
+export function takeReward(g,index){
+ if(g.state!=='reward'||g.rewardTaken||!g.rewardOptions[index])return false;const r=g.rewardOptions[index];g.rewardTaken=true;
+ if(r.kind==='weapon'){stashEquipment(g,r.weapon)}
+ else if(r.kind==='active'||r.kind==='support')g.bag[r.kind].push(r.id);
+ else{g.bag.currency.chromatic+=3;g.bag.currency.jeweller+=2;g.bag.currency.fusing+=2}
+ g.rewardOptions=[];g.state=g.round%10===0?'forge':'camp';g.forgeUnlocked=g.state==='forge';g.emit('loot',r);return true;
+}
+export function nextRound(g){
+ if(!['camp','forge'].includes(g.state)||!g.rewardTaken)return false;
+ if(!g.links.some((r,i)=>r.active&&weaponFor(g,i)))return false;
+ g.round++;g.roundTime=0;g.bossSpawned=false;g.boss=null;g.rewardTaken=false;g.forgeUnlocked=false;g.spawnClock=1;g.castClocks=[0,.2,.4];g.gems=[];g.state='playing';g.emit('nextRound');return true;
+}
+export function craft(g,weaponId,action,options={}){
+ if(!g.forgeUnlocked||!['forge','build'].includes(g.state))return{ok:false,reason:'每完成 10 回合才可使用工坊'};
+ const w=g.bag.weapons.find(v=>v.id===weaponId);if(!w)return{ok:false,reason:'找不到裝備'};
+ let type,cost;
+ if(action==='socket'){if(w.sockets.length>=4)return{ok:false,reason:'孔洞已達 4 個上限'};type='jeweller';cost=2}
+ else if(action==='link'){if(w.linked>=w.sockets.length)return{ok:false,reason:'現有孔洞已全部連結'};type='fusing';cost=2}
+ else if(action==='recolor'){if(!Number.isInteger(options.index)||options.index<0||options.index>=w.sockets.length||!['R','G','B'].includes(options.color))return{ok:false,reason:'請選擇孔位與顏色'};if(w.sockets[options.index]===options.color)return{ok:false,reason:'已經是此顏色'};type='chromatic';cost=2}
+ else if(action==='reroll'){type='chromatic';cost=1}else return{ok:false,reason:'未知製作方式'};
+ if(g.bag.currency[type]<cost)return{ok:false,reason:`${CURRENCIES[type].name}不足，需要 ${cost} 顆`};
+ g.bag.currency[type]-=cost;
+ if(action==='socket')w.sockets.push(['R','G','B'][Math.floor(g.rng()*3)]);
+ else if(action==='link')w.linked++;
+ else if(action==='recolor')w.sockets[options.index]=options.color;
+ else w.sockets=w.sockets.map(()=>['R','G','B'][Math.floor(g.rng()*3)]);
+ const equipped=g.equipped.indexOf(w.id);if(equipped>=0)sanitize(g,equipped);return{ok:true,reason:'製作完成；不合色的寶石已退回背包。'};
+}

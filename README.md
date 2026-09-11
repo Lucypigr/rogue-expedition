@@ -1,52 +1,41 @@
 # 燼境 · EMBERFALL
 
-A complete single-run survival roguelike built with HTML, CSS and native JavaScript ES modules. No production dependencies, external assets, build step, tracking, or API keys.
+Playable desktop/mobile survival roguelike in HTML, CSS and native JavaScript ES modules, with no production dependencies.
 
 ## Play
 
-Use the deployed Site, or serve this repository over HTTP. The root `index.html` forwards to `dist/`, making existing GitHub Pages deployments compatible.
+Run `npm start` and open http://localhost:8080. The root page forwards to `dist/` for GitHub Pages.
+Desktop: WASD/arrows move, Space dashes, Escape/P pauses, B opens inventory. Mobile: touch joystick, dash button, ◈ inventory.
 
-```sh
-npm start
-# Open http://localhost:8080
-```
-
-Desktop: WASD / arrows to move, Space to dash, Escape or P to pause, B to open/close the gem workshop. The diamond button also opens the workshop on mobile. Opening it freezes simulation, and closing it returns to the previous menu, pause, upgrade selection, or live combat state. Three presets can be freely edited. Socket configurations survive restarting within the same page; gem refinements reset each run. Mobile: left joystick and right dash button. Fireballs automatically target nearby enemies. Collect crystals to level up, choose one of three randomized upgrades, and defeat the boss that appears after 3 minutes. A complete run normally takes 4–6 minutes. Refreshing resets the current run; the longest survival time is saved locally when storage is available.
-
-## Implemented
-
-- Seeded 2400×2400 forest maps, rocks, trees, paths, a starting ruin, terrain collision, camera and desktop minimap.
-- Eight enemy archetypes: melee crawler, fast runner, ranged shaman, heavy brute, charging beast, poison spitter, summoner, and terrain-phasing wraith.
-- One of three bosses is randomly selected per run: Ash Guardian (fire barrages / blasts), Winter Queen (ice fans / delayed frost circles), or Brood Mother (summons / poison pools / poison rings). Each attacks faster below half health.
-- Experience, escalating level requirements, common / rare / epic refinement rewards and global passive upgrades.
-- Three simultaneously equipped skill groups, each linking one active gem and three compatible support gems. Six active gems: fireball, ice lance, chain lightning, ice nova, orbit blades, meteor. Ten supports: multi-shot, pierce, chain, fork, echo, area, fast casting, ignite, life leech, culling. All gems are usable at the beginning of a run. Each gem may only occupy one socket; incompatible combinations and duplicate placements are rejected. Supports alter only their linked skill and include explicit damage tradeoffs.
-- Hit flashes, floating damage, bounded particles, camera shake and synthesized Web Audio effects.
-- Title, HUD, objectives, skill loadout, level selection, pause, victory, death, restart and sound toggle.
-- Touch pointer capture, multitouch dash, keyboard input, hidden-tab auto pause, responsive portrait and landscape layouts.
+- Start with exactly one Fireball gem and a two-socket staff. Each run resets gems, equipment and currency.
+- Every level pauses combat for three distinct gem choices. Click/tap or press 1–3 to choose, then equip through inventory. Unowned gems are prioritized.
+- Active rewards grant 1/2/3 refinement levels for common/rare/epic, each adding 12% base damage. Support effects depend on the gem, independent of rarity. Once all gems are owned, active refinements remain available.
+- A random boss appears after 22 seconds each round. Boss XP is collected immediately; resulting level rewards resolve before the separate weapon/active/support boss choice.
+- Independent equipment drop chance per kill: normal 3%, boss 80%, additional to boss reward choices. Drops automatically enter inventory and auto-equip an empty matching slot; gems require manual placement.
+- Three weapon slots, a cloak and leg armor each support one active plus up to three linked supports. Cloaks grant armor, legs grant movement speed, and equipment grants damage to matching skill tags.
+- White sockets accept all colors; other sockets require matching gem colors. Supports require compatible tags and a connection to the first socket. Each named gem may occupy only one group.
+- Every ten rounds unlock crafting for all equipment: add socket (2 Jeweller), add link (2 Fusing), random colors (1 Chromatic), targeted color (2 Chromatic). Maximum four sockets. Invalidated gems safely return to inventory.
+- Continue beyond round ten or finish the expedition from camp. Inventory holds 40 pieces; oldest unequipped spares recycle into two Jeweller when full. The latest eight drops appear in inventory.
 
 ## Architecture
 
+All game modules live in `dist/js/`.
+
 | Module | Responsibility |
 | --- | --- |
-| `dist/js/data.js` | Balance constants, enemy definitions, rarity weights, upgrade registry |
-| `dist/js/world.js` | Seeded randomness, terrain generation, spatial hash, collision |
-| `dist/js/engine.js` | DOM-independent simulation, AI, combat, progression and run state |
-| `dist/js/renderer.js` | Canvas rendering, terrain cache, culling, camera, minimap |
-| `dist/js/input.js` | Keyboard and touch input, focus/cancellation handling |
-| `dist/js/audio.js` | Gesture-unlocked, rate-limited Web Audio voices |
-| `dist/js/gems.js` | Active/support registry, tag validation, presets, per-link stat compilation |
-| `dist/js/combat.js` | Skill casting, projectiles, chain/fork/echo, ignite, leech and culling |
-| `dist/js/monsters.js` | Additional enemy registry, three boss variants, attack patterns |
-| `dist/js/extra-render.js` | New enemy silhouettes and linked spell effects |
-| `dist/js/build-ui.js` | Paused skill workshop, sockets, live stats, enemy guide |
-| `dist/js/main.js` | UI events, 60 Hz fixed-step loop and HUD updates |
-| `dist/style.css` | Responsive UI and overlays |
+| engine.js | DOM-independent simulation, AI and state transitions |
+| progression.js | Level/boss rewards, drop rates, equipment slots and crafting |
+| gems.js | 18 active and 18 support definitions, compatibility, local stats |
+| combat.js / advanced-combat.js | Projectiles, chains, forks, echo, totems and fields |
+| data.js / monsters.js | Balance, eight enemy types and three boss variants |
+| world.js | Seeded terrain, collision and spatial hash |
+| renderer.js / extra-render.js | Cached terrain, spell effects and enemies |
+| build-ui.js / main.js | Inventory, linked sockets, rewards and HUD |
+| input.js / audio.js | Keyboard, multitouch and synthesized audio |
 
-Add active/support gems through `ACTIVE_GEMS` and `SUPPORT_GEMS`, plus casting behavior when required. Add global passives through `SKILLS`. Add enemy statistics through `ENEMIES` / `EXTRA_ENEMIES` plus corresponding AI/render behavior. The simulation emits events rather than touching the DOM, allowing later changes to rendering, audio or platform wrappers independently. Native app packaging can reuse this Web project; a Unity port would need a separate renderer and platform integration.
+For compatibility, `bag.weapons` stores every equipment type; `weaponFor` resolves any slot. Item `slot` distinguishes weapon/cloak/legs. Equipment stats are derived rather than cumulatively applied on swaps.
 
-## Performance
-
-Static terrain is drawn once per seed. Simulation uses a fixed 1/60-second step with a six-step catch-up ceiling, spatial hashes for collision queries, viewport culling, capped device pixel ratio (1.75), and bounded enemy / projectile / particle collections. HUD updates at 10 Hz. No network requests occur during play.
+Fixed 60 Hz simulation, capped catch-up, cached terrain, viewport culling, capped pixel density, bounded combat/effect queues and 10 Hz HUD updates. No network requests during play. Best survival time persists locally.
 
 ## Verification
 
@@ -55,10 +44,6 @@ npm run check
 npm test
 ```
 
-22 automated tests cover gem tag compatibility, duplicate socket rejection, local support effects, all six active skills, chain/fork/echo behavior, ignite/leech/culling, all boss variants and preset stress simulations, plus seed reproducibility, terrain collision, automatic damage, melee attacks, ranged fire, upgrade selection and pause behavior, all three rarities, three-fireball multi-shot, boss spawn and victory, death/restart, dash and a 230-second bounded simulation. Desktop and mobile canvas renders were executed and inspected using a native Canvas implementation. Physical-device touch, browser-specific audio behavior and browser layout have not been verified on actual devices.
+29 automated tests cover terrain, collision, AI, all active skills/bosses, combat effects, pause/restart, bounded simulations, unique gem rewards, queued boss/level rewards, exact drop boundaries, armor slots and independent casting, crafting costs/colors/links, inventory recycling and round-ten continuation.
 
-The existing repository's earlier grid prototype remains recoverable from Git history.
-
-## Balance and limits
-
-Each linked support is a single available gem (not a consumable). Unlink a support before placing it elsewhere. Pierce resolves before chain; fork children cannot fork again; echoes cannot schedule further echoes. Ignite refreshes the strongest burn instead of stacking without limit. Life leech uses an 8-HP capacity replenishing at 8 HP/second. Effects, delayed meteors, echoes and hostile pools have hard bounds. Gem refinement improves one named active skill regardless of which group equips it; character passives apply globally.
+Physical-device touch and browser-specific audio still require device verification. Mechanics and visuals are original ARPG-inspired implementations; no Path of Exile assets are copied.
