@@ -47,3 +47,11 @@ npm test
 Automated tests cover terrain, collision, AI, all active skills/bosses, combat effects, pause/restart, bounded simulations, unique gem rewards, queued boss/level rewards, exact drop boundaries, armor slots and independent casting, crafting costs/colors/links, inventory recycling and all 45 waves, nine bosses, forge checkpoints and final victory.
 
 Physical-device touch and browser-specific audio still require device verification. Mechanics and visuals are original ARPG-inspired implementations; no Path of Exile assets are copied.
+
+## Encounter and socket clarity update
+
+Normal waves now range from 22 to 56 enemies, spawning in packs of 6/8/10 according to round. Boss waves add 9/12/15 finite reinforcements; boss defeat disperses remaining guards. Boss HP is increased 30% and damage raised. Wave budget, composition and pacing live in `encounters.js`. Entity caps remain unchanged. The HUD includes remaining scheduled/live enemies.
+
+Socket maps always display all four positions. Thick gold links mean connected to the active socket, broken links mean inactive, and dashed square sockets mean not yet opened. Text labels distinguish empty connected sockets from working support gems; the count describes linked sockets rather than incorrectly counting edges. Crafting previews use the same socket-state model as inventory.
+
+Figma inspection was blocked by the Starter MCP rate limit. Canva infographic generation was rejected because the connected endpoint accepts only document/email types. This update's UI was therefore implemented directly in HTML/CSS, with no claim of exported Figma/Canva artwork.
