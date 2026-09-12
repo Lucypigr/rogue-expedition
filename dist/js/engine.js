@@ -1,3 +1,4 @@
+import {updateHealingPools} from './healing-pools.js';
 import {packSize,spawnInterval,enemyPool} from './encounters.js';
 import {resetProgress,configureOwned,equipWeapon,bossDefeated,takeReward,nextRound,craft,weaponFor,dropEquipment,equipmentStats,rollLevelGems,chooseLevelGem,updateWaves} from './progression.js';
 import {createLinks,configureLink,compileSkill,rollGemRewards,GEM_PRESETS} from './gems.js';
@@ -33,6 +34,7 @@ export class Game{
  if(this.state!=='playing')return;dt=Math.min(.05,Math.max(0,dt));this.time+=dt;this.roundTime+=dt;const p=this.player;this.leechBudget=Math.min(8,this.leechBudget+8*dt);
  p.invincible=Math.max(0,p.invincible-dt);p.dashCooldown=Math.max(0,p.dashCooldown-dt);p.dashTime=Math.max(0,p.dashTime-dt);p.cast=Math.max(0,p.cast-dt);p.hp=Math.min(p.maxHp,p.hp+p.regen*dt);this.shake=Math.max(0,this.shake-dt*25);this.flash=Math.max(0,this.flash-dt);
  if(Math.hypot(input.x,input.y)>.05){const len=Math.max(1,Math.hypot(input.x,input.y));p.dirX=input.x/len;p.dirY=input.y/len;p.walk+=dt*12}const dx=p.dashTime>0?p.dirX:input.x,dy=p.dashTime>0?p.dirY:input.y,vel=p.speed*(1+equipmentStats(this).speed/100)*(p.dashTime>0?3.7:1);moveEntity(p,dx*vel*dt,dy*vel*dt,this.world);if(p.dashTime>0)this.burst(p.x,p.y,'#cad9ba',2);
+ updateHealingPools(this,dt);
  this.spawnClock-=dt;if(this.waveRemaining>0&&this.spawnClock<=0){this.spawnWave();this.spawnClock=spawnInterval(this.round,this.wave)}
  updateWaves(this);if(this.state!=='playing')return;
  updateCasting(this,dt);if(this.state!=='playing')return;
@@ -40,8 +42,8 @@ export class Game{
  for(const e of this.enemies){if(e.hp<=0)continue;e.hit=Math.max(0,e.hit-dt);e.slow=Math.max(0,e.slow-dt);e.cooldown-=dt;if(e.poisonTime>0){e.poisonTime-=dt;this.hitEnemy(e,(e.poisonDamage||0)*dt,{dot:true});if(this.state!=='playing')return;if(e.hp<=0)continue}if(e.burnTime>0){e.burnTime-=dt;this.hitEnemy(e,(e.burnDamage||0)*dt,{dot:true});if(this.state!=='playing')return;if(e.hp<=0)continue}const dist=distance(e,p),angle=Math.atan2(p.y-e.y,p.x-e.x),boss=isBoss(e);
   if(e.charge>0){e.charge-=dt;moveEntity(e,Math.cos(e.aim)*460*dt,Math.sin(e.aim)*460*dt,this.world);if(distance(e,p)<e.r+p.r+3)this.hurt(e.damage);this.burst(e.x,e.y,'#cb9878',1);continue}
   if(e.attack>0){e.attack-=dt;if(e.attack<=0){if(resolveExtraAttack(this,e)){}else if(boss){if(e.phase%2===0){for(let k=0;k<14;k++)this.fireHostile(e,k*Math.PI/7+e.aim,1,135);this.fireHostile(e,e.aim,5,195)}else{this.zones.push({x:e.tx,y:e.ty,r:100,timer:.7,life:.35,active:false,damage:32});this.zones.push({x:clamp(e.tx+100,40,WORLD_SIZE-40),y:e.ty+80,r:65,timer:1.1,life:.35,active:false,damage:23})}e.phase++;e.cooldown=e.hp<e.maxHp*.5?1.9:2.7;this.emit('sound','boss')}else if(e.type==='shaman'){this.fireHostile(e,e.aim,3,135);e.cooldown=2.5}else{if(dist<e.r+p.r+25)this.hurt(e.damage);e.cooldown=.9}}}
-  else if(e.cooldown<=0&&(startExtraAttack(e,dist)||(boss&&dist<700)||(e.type==='shaman'&&dist<370)||dist<e.r+p.r+20)){e.attack=boss?.85:['charger','spitter','summoner'].includes(e.type)?.8:e.type==='shaman'?.7:.42;e.aim=angle;e.tx=p.x;e.ty=p.y}
-  else{let speed=e.speed*(e.slow>0?1-(e.slowFactor||.35):1)*(boss&&e.hp<e.maxHp*.5?1.35:1);if(['shaman','spitter','summoner'].includes(e.type)&&dist<240)speed=dist<160?-speed*.5:0;let vx=Math.cos(angle)*speed,vy=Math.sin(angle)*speed;for(const o of this.grid.query(e.x,e.y,65)){if(o===e||o.hp<=0)continue;const d=distance(e,o),min=e.r+o.r+4;if(d<min&&d>0){vx+=(e.x-o.x)/d*(min-d)*3;vy+=(e.y-o.y)/d*(min-d)*3}}if(e.type==='wraith'){e.x=clamp(e.x+vx*dt,20,WORLD_SIZE-20);e.y=clamp(e.y+vy*dt,20,WORLD_SIZE-20)}else moveEntity(e,vx*dt,vy*dt,this.world)}
+  else if(e.cooldown<=0&&(startExtraAttack(e,dist)||(boss&&dist<700)||(e.type==='shaman'&&dist<370)||dist<e.r+p.r+20)){e.attack=boss?.85:['charger','spitter','summoner','sniper','bomber','mender'].includes(e.type)?.8:e.type==='shaman'?.7:.42;e.aim=angle;e.tx=p.x;e.ty=p.y}
+  else{let speed=e.speed*(e.slow>0?1-(e.slowFactor||.35):1)*(boss&&e.hp<e.maxHp*.5?1.35:1);if(['shaman','spitter','summoner','sniper','mender'].includes(e.type)&&dist<240)speed=dist<160?-speed*.5:0;let vx=Math.cos(angle)*speed,vy=Math.sin(angle)*speed;for(const o of this.grid.query(e.x,e.y,65)){if(o===e||o.hp<=0)continue;const d=distance(e,o),min=e.r+o.r+4;if(d<min&&d>0){vx+=(e.x-o.x)/d*(min-d)*3;vy+=(e.y-o.y)/d*(min-d)*3}}if(e.type==='wraith'){e.x=clamp(e.x+vx*dt,20,WORLD_SIZE-20);e.y=clamp(e.y+vy*dt,20,WORLD_SIZE-20)}else moveEntity(e,vx*dt,vy*dt,this.world)}
  }
  // Rebuild after movement so projectile queries use current positions.
  this.grid.clear();for(const e of this.enemies)if(e.hp>0)this.grid.add(e);

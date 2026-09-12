@@ -3,6 +3,7 @@ const TAU=Math.PI*2;
 function poly(c,p,color){c.fillStyle=color;c.beginPath();p.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.closePath();c.fill()}
 function circle(c,x,y,r,color){c.fillStyle=color;c.beginPath();c.arc(x,y,r,0,TAU);c.fill()}
 export function drawExtraEnemy(c,e,clock){
+ if(['sniper','bomber','mender'].includes(e.type)){c.save();c.translate(e.x,e.y);c.font='30px "Segoe UI Emoji",sans-serif';c.textAlign='center';c.fillText(e.type==='sniper'?'🏹':e.type==='bomber'?'💣':'☘',0,0);c.font='12px Arial';c.fillStyle=e.color;c.fillText(e.name,0,-34);if(e.attack>0){c.strokeStyle=e.color;c.lineWidth=2;if(e.type==='bomber'){c.beginPath();c.arc(0,0,105,0,TAU);c.stroke()}else if(e.type==='sniper'){c.setLineDash([8,8]);c.beginPath();c.moveTo(0,0);c.lineTo(Math.cos(e.aim)*650,Math.sin(e.aim)*650);c.stroke()}else{c.beginPath();c.arc(0,0,240,0,TAU);c.stroke()}}c.restore();return true}
  if(!['charger','spitter','summoner','wraith','frostBoss','broodBoss'].includes(e.type))return false;
  c.save();c.translate(e.x,e.y);const bob=Math.sin(clock*4+e.id)*2,color=e.hit>0?'#ffebc4':e.color;
  if(e.type==='charger'){

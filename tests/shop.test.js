@@ -15,8 +15,8 @@ test('shop deducts gold exactly once, protects equipped gear and rejects repeate
  g.gold=179;assert.equal(buy(g,'ticket').ok,false);g.gold=180;assert.equal(buy(g,'ticket').ok,true);assert.equal(g.gold,0);assert.equal(g.tickets,1);
  g.state='playing';assert.equal(drawLottery(g).ok,false);assert.equal(g.tickets,1);
 });
-test('tickets give only legendary rewards, spend once and never grant duplicate gems',()=>{
- const g=fresh();g.tickets=4;g.rng=()=>.9;
+test('legendary branch spends once, spend once and never grant duplicate gems',()=>{
+ const g=fresh();g.tickets=4;let rolls=0;g.rng=()=>rolls++%3===0?.01:.9;
  for(let i=0;i<3;i++){const r=drawLottery(g);assert.equal(r.ok,true);assert.equal(r.reward.kind,'gem');assert.equal(r.reward.rarity,'legendary')}
  assert.equal(new Set(g.bag.support).size,3);const r=drawLottery(g);assert.equal(r.reward.kind,'weapon');assert.equal(g.tickets,0);assert.equal(drawLottery(g).ok,false);
  g.tickets=1;while(g.bag.weapons.length<40)g.bag.weapons.push({...makeLegendary(g,1)});assert.equal(drawLottery(g).ok,false);assert.equal(g.tickets,1);

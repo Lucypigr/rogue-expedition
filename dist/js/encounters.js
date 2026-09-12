@@ -5,7 +5,7 @@ export function spawnInterval(round,wave){return Math.max(.55,1.05-round*.1-wave
 export function enemyPool(round,wave){
  const tier=(round-1)*15+wave;
  if(tier<3)return ['crawler','crawler','runner','runner'];
- if(tier<5)return ['crawler','runner','runner','shaman','brute'];
- if(tier<11)return ['crawler','runner','shaman','brute','charger','spitter'];
- return ['crawler','runner','shaman','brute','charger','spitter','summoner','wraith'];
+ if(tier<5)return ['crawler','runner','runner','shaman','brute','bomber'];
+ if(tier<11)return ['crawler','runner','shaman','brute','charger','spitter','sniper','bomber'];
+ return ['crawler','runner','shaman','brute','charger','spitter','summoner','wraith','sniper','bomber','mender'];
 }
