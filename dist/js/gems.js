@@ -1,3 +1,4 @@
+import {affixTotal} from './affixes.js';
 /** Gem definitions are independent of rendering and can be extended by tag. */
 export const ACTIVE_GEMS = {
   fireball: {name:'烈焰火球',icon:'✷',color:'#f3af62',tags:['spell','projectile','area','hit'],desc:'火球命中後爆炸，擅長清除密集敵群。',damage:24,rate:1.8,speed:380,blast:28},
@@ -53,6 +54,23 @@ Object.assign(SUPPORT_GEMS,{
  dominion:{name:'神域之力',icon:'✦',rarity:'legendary',socket:'R',tags:['hit'],desc:'命中傷害提升至 3 倍。',apply:s=>{s.damage*=3}},
  eternity:{name:'永恆連鎖',icon:'⌁',rarity:'legendary',socket:'B',tags:['projectile','chain'],desc:'額外連鎖 8 次，施放頻率 +50%。',apply:s=>{s.chain+=8;s.rate*=1.5}}
 });
+Object.assign(ACTIVE_GEMS,{
+ embertrail:{name:'焚燼足跡',icon:'♨',color:'#f6a365',socket:'R',trail:true,tags:['spell','area','duration','hit'],desc:'移動時留下 3 秒火焰，每半秒灼傷踩入的敵人。',damage:14,rate:3,radius:38,duration:3},
+ frosttrail:{name:'霜行之徑',icon:'❄',color:'#9cdef4',socket:'B',trail:true,tags:['spell','area','duration','hit'],desc:'移動時留下 3 秒冰徑，傷害並緩速敵人 50%。',damage:9,rate:3,radius:42,duration:3,slow:.5},
+ toxictrail:{name:'腐蝕步道',icon:'☣',color:'#afd779',socket:'G',trail:true,tags:['spell','area','duration','hit'],desc:'移動時留下 4 秒毒霧，踩入的敵人附加腐蝕。',damage:11,rate:2.5,radius:40,duration:4,poison:.18},
+ swiftaura:{name:'疾行光環',icon:'↟',color:'#aed591',socket:'G',aura:{speed:35,damage:.75},tags:['aura'],desc:'手動開關：移速 +35%，造成傷害 -25%。占用一組主動孔，不接受輔助。',damage:0,rate:0},
+ wrathaura:{name:'狂熱光環',icon:'✦',color:'#e28e7c',socket:'R',aura:{damage:1.45,armor:-4},tags:['aura'],desc:'手動開關：造成傷害 +45%，護甲 -4。占用一組主動孔，不接受輔助。',damage:0,rate:0},
+ renewalaura:{name:'復甦光環',icon:'♥',color:'#91ccec',socket:'B',aura:{regen:4,speed:-18},tags:['aura'],desc:'手動開關：每秒回血 4 點，移速 -18%。占用一組主動孔，不接受輔助。',damage:0,rate:0},
+ sunshot:{name:'烈日穿星',icon:'☀',color:'#f6bc70',socket:'R',tags:['spell','projectile','hit'],desc:'射出穿透 4 名敵人的烈日光矛。',damage:48,rate:.85,speed:460,pierce:4},
+ thornburst:{name:'荊棘齊射',icon:'✣',color:'#b6d38b',socket:'G',tags:['projectile','hit'],desc:'同時射出 5 枚帶毒荊棘。',damage:12,rate:1.15,speed:340,count:5,poison:.15}
+});
+Object.assign(SUPPORT_GEMS,{
+ heavy:{name:'沉重打擊',icon:'◆',socket:'R',tags:['hit'],desc:'傷害 +50%，施放頻率 -20%。',apply:s=>{s.damage*=1.5;s.rate*=.8}},
+ wide:{name:'廣域蔓延',icon:'◌',socket:'B',tags:['area'],desc:'範圍半徑 +70%，傷害 -30%。',apply:s=>{s.radius*=1.7;s.blast*=1.7;s.damage*=.7}},
+ lingering:{name:'悠長餘韻',icon:'◷',socket:'G',tags:['duration'],desc:'持續時間 +80%，傷害 -20%。',apply:s=>{s.duration*=1.8;s.damage*=.8}},
+ siphon:{name:'鮮血汲取',icon:'♥',socket:'R',tags:['hit'],desc:'命中偷取生命提高至至少 6%，傷害 -15%；仍受每秒回血上限限制。',apply:s=>{s.leech=Math.max(s.leech,.06);s.damage*=.85}}
+});
+export const gemColor=id=>({R:'#e28e7c',G:'#aed591',B:'#91ccec',W:'#eae6d3'}[(ACTIVE_GEMS[id]||SUPPORT_GEMS[id])?.socket]||'#eae6d3');
 for(const [id,g] of Object.entries(ACTIVE_GEMS))g.socket??=id==='orbit'?'G':'B';
 for(const [id,g] of Object.entries(SUPPORT_GEMS))g.socket??=['multi','pierce','fork','chain','execute'].includes(id)?'G':['burn','leech'].includes(id)?'R':'B';
 export const DEFAULT_LINKS=[{active:'fireball',supports:[null,null,null]},{active:null,supports:[null,null,null]},{active:null,supports:[null,null,null]}];
@@ -75,8 +93,10 @@ export function configureLink(links,index,kind,socket,value){
 export function compileSkill(row,player,levels={},weapon=null){
   if(!row?.active||!ACTIVE_GEMS[row.active])return null;
   const a=ACTIVE_GEMS[row.active],level=levels[row.active]||0;
-  const s={id:row.active,color:a.color,damage:a.damage*(player.damage/24)*(1+level*.12),rate:a.rate*(player.attackRate/1.8),speed:a.speed||380,radius:a.radius||0,blast:a.blast||0,count:a.count||1,pierce:a.pierce||0,chain:a.chain||0,slow:a.slow||0,fork:false,echo:false,burn:0,leech:0,execute:false,duration:a.duration||3,poison:a.poison||0,knockback:a.knockback||0,crit:0,ricochet:a.ricochet||0,returning:a.returning||false};
+  const s={id:row.active,color:a.color,damage:(a.damage+affixTotal(weapon,'flat'))*(player.damage/24)*(player.auraDamage??1)*(1+level*.12),rate:a.rate*(player.attackRate/1.8),speed:a.speed||380,radius:a.radius||0,blast:a.blast||0,count:a.count||1,pierce:a.pierce||0,chain:a.chain||0,slow:a.slow||0,fork:false,echo:false,burn:0,leech:0,execute:false,duration:a.duration||3,poison:a.poison||0,knockback:a.knockback||0,crit:0,ricochet:a.ricochet||0,returning:a.returning||false};
+  s.damage*=1+(affixTotal(weapon,'damage')+(a.tags.includes('spell')?affixTotal(weapon,'spell'):0)+(a.tags.includes('projectile')?affixTotal(weapon,'projectile'):0))/100;s.rate*=1+affixTotal(weapon,'rate')/100;
   for(const id of row.supports)if(id&&compatible(row.active,id))SUPPORT_GEMS[id].apply(s);
+  s.crit=Math.min(1,s.crit+affixTotal(weapon,'crit')/100);
   if(weapon&&a.tags.includes(weapon.bonus))s.damage*=1+weapon.power/100;
   return s;
 }

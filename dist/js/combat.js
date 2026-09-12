@@ -1,7 +1,7 @@
 import {weaponFor} from './progression.js';
 import {castAdvanced,updateAdvanced} from './advanced-combat.js';
 import {isBoss} from './monsters.js';
-import {compileSkill} from './gems.js';
+import {compileSkill,ACTIVE_GEMS} from './gems.js';
 import {distance} from './world.js';
 export function nearest(game,point,range=560,excluded=new Set()){
  let found=null,best=range;
@@ -24,7 +24,10 @@ function projectile(game,s,x,y,a,extra={}){
  game.shots.push({...s,x,y,vx:Math.cos(a)*s.speed,vy:Math.sin(a)*s.speed,life:1.8,r:s.id==='ice'?5:6,hit:new Set(),...extra});
 }
 export function castSkill(game,s){
- if(!s)return false;const p=game.player,target=nearest(game,p,['nova','cyclone','shockwave'].includes(s.id)?s.radius+40:600);
+ if(!s)return false;const p=game.player;
+ if(ACTIVE_GEMS[s.id]?.aura)return false;
+ if(ACTIVE_GEMS[s.id]?.trail){if(!p.moving||game.fields.length>=35)return false;game.fields.push({type:s.id,x:p.x,y:p.y,vx:0,vy:0,life:s.duration,clock:0,skill:{...s}});return true}
+ const target=nearest(game,p,['nova','cyclone','shockwave'].includes(s.id)?s.radius+40:600);
  if(s.id==='orbit'){
    for(let i=0;i<2;i++){const a=game.time*2.6+i*Math.PI,point={x:p.x+Math.cos(a)*s.radius,y:p.y+Math.sin(a)*s.radius};for(const e of game.enemies)if(e.hp>0&&distance(point,e)<e.r+15)damageWithEffects(game,e,s.damage,s)}return true;
  }
@@ -34,7 +37,7 @@ export function castSkill(game,s){
    if(s.id==='phoenix'){effect(game,{type:'phoenix',x:p.x,y:p.y,tx:target.x,ty:target.y,life:1.2,max:1.2,color:s.color});p.hp=Math.min(p.maxHp,p.hp+p.maxHp*.12);game.texts.push({x:p.x,y:p.y-40,text:'鳳凰降臨 +'+Math.round(p.maxHp*.12),life:1,color:'#ffd78a'});for(let i=0;i<5;i++){const a=i*Math.PI*2/5;effect(game,{type:'arc',x:p.x,y:p.y,tx:p.x+Math.cos(a)*s.radius,ty:p.y+Math.sin(a)*s.radius,life:.7,max:.7,color:s.color})}}
    game.burst(p.x,p.y,s.color,30);game.shake=5;
    for(const e of [...game.enemies])if(e.hp>0&&distance(p,e)<s.radius+e.r)damageWithEffects(game,e,s.damage,s);
- }else if(castAdvanced(game,s,target,projectile,effect,damageWithEffects)){}else if(s.id==='fireball'||s.id==='ice'||s.id==='astral'){
+ }else if(castAdvanced(game,s,target,projectile,effect,damageWithEffects)){}else if(s.id==='fireball'||s.id==='ice'||s.id==='astral'||s.id==='sunshot'||s.id==='thornburst'){
    const a=Math.atan2(target.y-p.y,target.x-p.x);
    for(let i=0;i<s.count;i++)projectile(game,s,p.x,p.y-7,a+(i-(s.count-1)/2)*.17);
  }else if(s.id==='arc'){

@@ -1,3 +1,4 @@
+import {refreshAuras,toggleAura} from './auras.js';
 import {updateHealingPools} from './healing-pools.js';
 import {packSize,spawnInterval,enemyPool} from './encounters.js';
 import {resetProgress,configureOwned,equipWeapon,bossDefeated,takeReward,nextRound,craft,weaponFor,dropEquipment,equipmentStats,rollLevelGems,chooseLevelGem,updateWaves} from './progression.js';
@@ -10,8 +11,9 @@ import {seeded,createWorld,moveEntity,distance,SpatialHash,clamp} from './world.
 export class Game{
  constructor({seed=Date.now()>>>0,onEvent=()=>{}}={}){this.onEvent=onEvent;this.reset(seed);this.state='menu'}
  reset(seed=Date.now()>>>0){resetProgress(this);this.fields=[];this.totems=[];this.gemLevels={};this.castClocks=[0,.3,.6];this.echoes=[];this.meteors=[];this.effects=[];this.leechBudget=8;this.seed=seed;this.rng=seeded(seed^0xBADCAFE);this.world=createWorld(seed);this.player=makePlayer();this.enemies=[];this.shots=[];this.hostile=[];this.gems=[];this.particles=[];this.texts=[];this.zones=[];this.owned={};this.time=0;this.kills=0;this.spawnClock=0;this.fireClock=0;this.orbitClock=0;this.bossSpawned=false;this.boss=null;this.shake=0;this.flash=0;this.nextId=1;this.state='playing';this.grid=new SpatialHash(100);this.choices=[];this.onEvent('reset')}
- configure(index,kind,socket,value){const r=configureOwned(this,index,kind,socket,value);if(r.ok)this.emit('loadout');return r}
+ configure(index,kind,socket,value){const r=configureOwned(this,index,kind,socket,value);if(r.ok){refreshAuras(this);this.emit('loadout')};return r}
  equip(index,id){const r=equipWeapon(this,index,id);if(r.ok)this.emit('loadout');return r}
+ toggleAura(id){return toggleAura(this,id)}
  choose(i){return chooseLevelGem(this,i)}
  takeReward(i){return takeReward(this,i)}
  nextRound(){return nextRound(this)}
@@ -25,15 +27,15 @@ export class Game{
  summonBoss(type=BOSS_ROSTER[Math.floor(this.rng()*BOSS_ROSTER.length)]){this.bossSpawned=true;const p=this.player,a=this.rng()*6.28;this.boss=this.spawn(type,clamp(p.x+Math.cos(a)*440,90,WORLD_SIZE-90),clamp(p.y+Math.sin(a)*440,90,WORLD_SIZE-90));this.boss.hp=this.boss.maxHp=(260+((this.round-1)*3+Math.ceil(this.wave/5))*95)*1.3*(this.boss.maxHp/2700);this.boss.damage*=.85+this.round*.05;this.emit('boss',bossName(this.boss));this.emit('sound','boss');this.shake=7}
  burst(x,y,color,count=8){for(let i=0;i<count&&this.particles.length<MAX_PARTICLES;i++){const a=this.rng()*6.28,s=25+this.rng()*110;this.particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.25+this.rng()*.35,max:.6,color,r:1+this.rng()*3})}}
  hitEnemy(e,damage,{dot=false}={}){if(e.hp<=0||this.state!=='playing')return;e.hp-=damage;if(!dot){e.hit=.12;this.burst(e.x,e.y,isBoss(e)?'#f8b768':'#c9d5a0',4)}if(!dot&&this.texts.length<70)this.texts.push({x:e.x,y:e.y-20,text:Math.round(damage),life:.65,color:'#f7d5a0'});if(!dot)this.emit('sound','hit');if(e.hp<=0){this.kills++;this.gold+=isBoss(e)?150:5;this.burst(e.x,e.y,'#ddba73',12);dropEquipment(this,isBoss(e));if(isBoss(e))this.player.xp+=e.xp;else if(this.gems.length<250)this.gems.push({x:e.x,y:e.y,value:e.xp,r:5});else{const g=this.gems.reduce((a,b)=>distance(a,e)<distance(b,e)?a:b);g.value+=e.xp}if(isBoss(e)){this.shake=12;bossDefeated(this)}else if(this.rng()<.05){const keys=['chromatic','jeweller','fusing'];this.bag.currency[keys[Math.floor(this.rng()*3)]]++}else if(this.rng()<.025)this.gems.push({x:e.x+8,y:e.y,value:0,heal:12,r:6})}}
- hurt(amount){const p=this.player;if(p.invincible>0||this.state!=='playing')return;p.hp=Math.max(0,p.hp-Math.max(1,amount-p.armor-equipmentStats(this).armor));p.invincible=.7;this.shake=7;this.flash=.2;this.burst(p.x,p.y,'#eb8f77',13);this.emit('sound','hurt');if(p.hp<=0){this.state='dead';this.emit('sound','die');this.emit('end',false)}}
+ hurt(amount){const p=this.player;if(p.invincible>0||this.state!=='playing')return;p.hp=Math.max(0,p.hp-Math.max(1,amount-p.armor-equipmentStats(this).armor-(p.auraArmor||0)));p.invincible=.7;this.shake=7;this.flash=.2;this.burst(p.x,p.y,'#eb8f77',13);this.emit('sound','hurt');if(p.hp<=0){this.state='dead';this.emit('sound','die');this.emit('end',false)}}
  checkLevel(){const p=this.player;if(!['playing','reward','camp','forge'].includes(this.state)||p.xp<p.nextXp)return;this.levelReturn=this.state;p.xp-=p.nextXp;p.level++;p.nextXp=Math.round(p.nextXp*1.18+4);p.damage*=1.07;p.maxHp+=5;p.hp=Math.min(p.maxHp,p.hp+15);this.choices=rollLevelGems(this);this.state='levelup';this.emit('sound','level');this.emit('levelup',this.choices)}
 
  shoot(){return castSkill(this,compileSkill(this.links[0],this.player,this.gemLevels))}
  fireHostile(e,a,n=1,speed=140){for(let i=0;i<n&&this.hostile.length<220;i++){const angle=a+(i-(n-1)/2)*.20;this.hostile.push({x:e.x,y:e.y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,life:5,r:isBoss(e)?8:6,damage:e.damage,color:e.color})}}
  step(dt,input={x:0,y:0}){
- if(this.state!=='playing')return;dt=Math.min(.05,Math.max(0,dt));this.time+=dt;this.roundTime+=dt;const p=this.player;this.leechBudget=Math.min(8,this.leechBudget+8*dt);
- p.invincible=Math.max(0,p.invincible-dt);p.dashCooldown=Math.max(0,p.dashCooldown-dt);p.dashTime=Math.max(0,p.dashTime-dt);p.cast=Math.max(0,p.cast-dt);p.hp=Math.min(p.maxHp,p.hp+p.regen*dt);this.shake=Math.max(0,this.shake-dt*25);this.flash=Math.max(0,this.flash-dt);
- if(Math.hypot(input.x,input.y)>.05){const len=Math.max(1,Math.hypot(input.x,input.y));p.dirX=input.x/len;p.dirY=input.y/len;p.walk+=dt*12}const dx=p.dashTime>0?p.dirX:input.x,dy=p.dashTime>0?p.dirY:input.y,vel=p.speed*(1+equipmentStats(this).speed/100)*(p.dashTime>0?3.7:1);moveEntity(p,dx*vel*dt,dy*vel*dt,this.world);if(p.dashTime>0)this.burst(p.x,p.y,'#cad9ba',2);
+ if(this.state!=='playing')return;dt=Math.min(.05,Math.max(0,dt));refreshAuras(this);this.time+=dt;this.roundTime+=dt;const p=this.player;this.leechBudget=Math.min(8,this.leechBudget+8*dt);
+ p.invincible=Math.max(0,p.invincible-dt);p.dashCooldown=Math.max(0,p.dashCooldown-dt);p.dashTime=Math.max(0,p.dashTime-dt);p.cast=Math.max(0,p.cast-dt);p.hp=Math.min(p.maxHp,p.hp+(p.regen+(p.auraRegen||0))*dt);this.shake=Math.max(0,this.shake-dt*25);this.flash=Math.max(0,this.flash-dt);
+ if(Math.hypot(input.x,input.y)>.05){const len=Math.max(1,Math.hypot(input.x,input.y));p.dirX=input.x/len;p.dirY=input.y/len;p.walk+=dt*12}const dx=p.dashTime>0?p.dirX:input.x,dy=p.dashTime>0?p.dirY:input.y,vel=p.speed*(1+(equipmentStats(this).speed+(p.auraSpeed||0))/100)*(p.dashTime>0?3.7:1);const beforeX=p.x,beforeY=p.y;moveEntity(p,dx*vel*dt,dy*vel*dt,this.world);p.moving=Math.hypot(p.x-beforeX,p.y-beforeY)>.001;if(p.dashTime>0)this.burst(p.x,p.y,'#cad9ba',2);
  updateHealingPools(this,dt);
  this.spawnClock-=dt;if(this.waveRemaining>0&&this.spawnClock<=0){this.spawnWave();this.spawnClock=spawnInterval(this.round,this.wave)}
  updateWaves(this);if(this.state!=='playing')return;

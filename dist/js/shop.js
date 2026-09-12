@@ -1,3 +1,4 @@
+import {rollAffixes} from './affixes.js';
 import {stashEquipment,weaponReward,WEAPON_BASES,ARMOR_BASES} from './progression.js';
 import {SUPPORT_GEMS} from './gems.js';
 export const TICKET_PRICE=180;
@@ -33,7 +34,7 @@ export function drawLottery(g){
  if(!shopOpen(g))return fail('請在商店使用臨界卷');if(g.tickets<1)return fail('需要一張臨界卷');if(g.bag.weapons.length>=40)return fail('背包已滿，請先出售裝備');
  const gems=Object.keys(SUPPORT_GEMS).filter(id=>SUPPORT_GEMS[id].rarity==='legendary'&&!g.bag.support.includes(id));
  g.tickets--;let reward;const rarity=lotteryRarity(g.rng());
- if(rarity!=='legendary'){const w=weaponReward(g).weapon;w.rarity=rarity;const tier=(g.round-1)*3+Math.ceil(g.wave/5);w.power=8+tier*3+(rarity==='epic'?20:rarity==='rare'?10:0);w.sockets=Array.from({length:rarity==='epic'?4:rarity==='rare'?3:2},()=>['R','G','B'][Math.floor(g.rng()*3)]);w.sockets[0]='W';w.linked=rarity==='epic'?3:2;stashEquipment(g,w);reward={kind:'weapon',...w}}
+ if(rarity!=='legendary'){const w=weaponReward(g).weapon;w.rarity=rarity;const tier=(g.round-1)*3+Math.ceil(g.wave/5);w.power=8+tier*3+(rarity==='epic'?20:rarity==='rare'?10:0);w.sockets=Array.from({length:rarity==='epic'?4:rarity==='rare'?3:2},()=>['R','G','B'][Math.floor(g.rng()*3)]);w.sockets[0]='W';w.linked=rarity==='epic'?3:2;rollAffixes(w,g.rng,tier);stashEquipment(g,w);reward={kind:'weapon',...w}}
  else if(gems.length&&g.rng()>=.5){const id=gems[Math.floor(g.rng()*gems.length)];g.bag.support.push(id);reward={kind:'gem',...SUPPORT_GEMS[id],id}}
  else{const w=makeLegendary(g,Math.floor(g.rng()*LEGENDARY_WEAPONS.length));stashEquipment(g,w);reward={kind:'weapon',...w}}
  g.lastPrize=reward;g.emit('loadout');g.emit('sound','win');return {ok:true,reason:(rarity==='legendary'?'傳說降臨：':'抽獎獲得：')+reward.name,reward};

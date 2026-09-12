@@ -25,9 +25,9 @@ All game modules live in `dist/js/`.
 | --- | --- |
 | engine.js | DOM-independent simulation, AI and state transitions |
 | progression.js | Level/boss rewards, drop rates, equipment slots and crafting |
-| gems.js | 18 active and 18 support definitions, compatibility, local stats |
+| gems.js | 26 ordinary active and 22 ordinary support definitions, plus legendary exclusives, compatibility, local stats |
 | combat.js / advanced-combat.js | Projectiles, chains, forks, echo, totems and fields |
-| data.js / monsters.js | Balance, eight enemy types and three boss variants |
+| data.js / monsters.js | Balance, eleven enemy types and three boss variants |
 | world.js | Seeded terrain, collision and spatial hash |
 | renderer.js / extra-render.js | Cached terrain, spell effects and enemies |
 | build-ui.js / main.js | Inventory, linked sockets, rewards and HUD |
@@ -69,3 +69,12 @@ Legendary supports: Infinity adds 10 projectiles without penalty, Dominion tripl
 ## Wildlife and healing pools
 
 Eleven normal enemy types now include a telegraphed long-range sniper, a proximity bomber and a healer that restores living nearby allies. Composition expands with wave progress. Five seeded healing pools are placed clear of obstacles, including one near the starting clearing. Contact restores 25% maximum HP and starts a 45-second cooldown; full-health players do not consume pools. Cooldowns pause with simulation and reset with a new run. Pools show their ready/cooldown state on the map.
+
+## Trails, auras and weapon affixes
+
+- Gem names use their red/green/blue/white socket color throughout rewards, equipment and inventory.
+- New active gems: Ember Trail, Frost Trail, Toxic Trail, Swift Aura, Wrath Aura, Renewal Aura, Sunshot and Thornburst. New supports: Heavy, Wide, Lingering and Siphon. Trails are emitted only while moving and use bounded, timed area effects.
+- Equip an aura into an active socket, then toggle it with the arena or equipment button. Auras start off: Swift grants +35% movement and 25% less damage; Wrath grants 45% more damage and -4 armor; Renewal grants 4 HP/s and -18% movement. Effects end when disabled or unequipped. Auras do not accept supports or damage refinements.
+- Ordinary weapons have no affixes; rare weapons roll one prefix and suffix, epic weapons two each. Legendary weapons retain fixed exclusive powers. Eight affix families cover damage, spell/projectile damage, flat damage, cast speed, critical chance, armor and movement speed. Each family occurs at most once per item. Tier progresses from T3 to T1 with encounter stage.
+- Damage/cast/critical affixes apply only to the equipped weapon's skill group; armor/movement affixes affect the character. Item cards expose each affix, tier and value before equipping or buying.
+- `affixes.js` owns rolling and display; `auras.js` derives temporary bonuses; `aura-ui.js` supplies accessible toggle controls.

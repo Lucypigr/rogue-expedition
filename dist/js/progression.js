@@ -1,3 +1,4 @@
+import {rollAffixes,affixTotal} from './affixes.js';
 import {waveBudget} from './encounters.js';
 import {ACTIVE_GEMS,SUPPORT_GEMS,configureLink,compatible} from './gems.js';
 export const SOCKET_COLORS={R:{name:'紅',hex:'#e28e7c'},G:{name:'綠',hex:'#aed591'},B:{name:'藍',hex:'#91ccec'},W:{name:'白',hex:'#eae6d3'}};
@@ -6,7 +7,7 @@ export const WEAPON_BASES=[{name:'燼火法杖',icon:'⚚',bonus:'spell',socket:
 export function gemSocket(id){return ACTIVE_GEMS[id]?.socket||SUPPORT_GEMS[id]?.socket||'B'}
 export function colorFits(socket,gem){return socket==='W'||socket===gemSocket(gem)}
 export function resetProgress(g){
- g.gold=0;g.tickets=0;g.shop=null;g.lastPrize=null;g.round=1;g.wave=1;g.waveRemaining=waveBudget(1,1);g.roundTime=0;g.bossesDefeated=0;g.forgeUnlocked=false;g.rewardTaken=false;g.rewardOptions=[];g.levelReturn='playing';g.lootHistory=[];g.bag={active:['fireball'],support:[],weapons:[],currency:{chromatic:0,jeweller:0,fusing:0}};
+ g.auras={};g.gold=0;g.tickets=0;g.shop=null;g.lastPrize=null;g.round=1;g.wave=1;g.waveRemaining=waveBudget(1,1);g.roundTime=0;g.bossesDefeated=0;g.forgeUnlocked=false;g.rewardTaken=false;g.rewardOptions=[];g.levelReturn='playing';g.lootHistory=[];g.bag={active:['fireball'],support:[],weapons:[],currency:{chromatic:0,jeweller:0,fusing:0}};
  const starter={id:'starter',name:'旅人的朽木杖',icon:'⚚',slot:'weapon',rarity:'common',bonus:'spell',power:0,sockets:['B','W'],linked:2};g.bag.weapons.push(starter);g.equipped=['starter',null,null,null,null];g.links=Array.from({length:5},(_,i)=>({active:i===0?'fireball':null,supports:[null,null,null]}));
 }
 export const EQUIPMENT_SLOTS=['weapon','weapon','weapon','cloak','legs'];
@@ -15,7 +16,7 @@ export const DROP_RATES={normal:.03,boss:.8};
 export const ARMOR_BASES=[{slot:'cloak',name:'灰燼披風',icon:'◭',bonus:'spell'},{slot:'cloak',name:'暮影斗篷',icon:'◮',bonus:'hit'},{slot:'legs',name:'疾風護腿',icon:'♜',bonus:'projectile'},{slot:'legs',name:'隕鐵腿甲',icon:'♜',bonus:'area'}];
 export const gearType=w=>w.slot||'weapon';
 export const gearLabel=w=>`${w.name} · ${w.slot==='cloak'?'護甲 +'+w.armor:w.slot==='legs'?'移速 +'+w.speed+'%':w.power+'% 傷害'}`;
-export function equipmentStats(g){return g.equipped.reduce((v,_,i)=>{const w=weaponFor(g,i);v.armor+=w?.armor||0;v.speed+=w?.speed||0;return v},{armor:0,speed:0})}
+export function equipmentStats(g){return g.equipped.reduce((v,_,i)=>{const w=weaponFor(g,i);v.armor+=(w?.armor||0)+affixTotal(w,'armor');v.speed+=(w?.speed||0)+affixTotal(w,'speed');return v},{armor:0,speed:0})}
 export function stashEquipment(g,w){
  if(g.bag.weapons.length>=40&&!g.bag.weapons.some(v=>!g.equipped.includes(v.id)&&v.rarity!=='legendary')){g.bag.currency.jeweller+=2;return false}
  g.bag.weapons.push(w);
@@ -33,16 +34,16 @@ export function dropEquipment(g,boss=false){
 export function rollLevelGems(g){
  const pool=[...Object.entries(ACTIVE_GEMS).filter(([,a])=>!a.exclusive).map(([id,a])=>({id,...a,kind:'active'})),...Object.entries(SUPPORT_GEMS).filter(([id,a])=>!a.rarity&&!g.bag.support.includes(id)).map(([id,a])=>({id,...a,kind:'support'}))];
  // Prefer discoveries; once collected, active gems remain available as refinements.
- const fresh=pool.filter(a=>!g.bag[a.kind].includes(a.id)),repeats=pool.filter(a=>g.bag[a.kind].includes(a.id));
+ const fresh=pool.filter(a=>!g.bag[a.kind].includes(a.id)),repeats=pool.filter(a=>!a.aura&&g.bag[a.kind].includes(a.id));
  const out=[];
  while(out.length<3){const candidates=fresh.length?fresh:repeats;const a=candidates.splice(Math.floor(g.rng()*candidates.length),1)[0],r=g.rng(),rarity=r<.62?'common':r<.91?'rare':'epic',rank=rarity==='epic'?3:rarity==='rare'?2:1;
- out.push({...a,rarity,rank,desc:`${SOCKET_COLORS[gemSocket(a.id)].name}色${a.kind==='active'?'主動':'輔助'}寶石 · ${a.desc}${a.kind==='active'?' · 精煉 +'+rank+'（每級傷害 +12%）':''}`})}
+ out.push({...a,rarity,rank,desc:`${SOCKET_COLORS[gemSocket(a.id)].name}色${a.kind==='active'?'主動':'輔助'}寶石 · ${a.desc}${a.kind==='active'&&!a.aura?' · 精煉 +'+rank+'（每級傷害 +12%）':''}`})}
  return out;
 }
 export function chooseLevelGem(g,index){
  if(g.state!=='levelup'||!Number.isInteger(index)||!g.choices[index])return false;
  const a=g.choices[index];if(!g.bag[a.kind].includes(a.id))g.bag[a.kind].push(a.id);
- if(a.kind==='active')g.gemLevels[a.id]=(g.gemLevels[a.id]||0)+a.rank;
+ if(a.kind==='active'&&!a.aura)g.gemLevels[a.id]=(g.gemLevels[a.id]||0)+a.rank;
  g.choices=[];g.state=g.levelReturn;g.checkLevel();g.emit('upgrade',a);return true;
 }
 export const weaponFor=(g,i)=>g.bag.weapons.find(w=>w.id===g.equipped[i]);
@@ -61,7 +62,7 @@ export function equipWeapon(g,index,id){
  g.equipped[index]=id;sanitize(g,index);return{ok:true};
 }
 export function sanitize(g,index){const w=weaponFor(g,index),row=g.links[index];if(!w||!row)return;if(w.intrinsic)row.active=w.intrinsic;else if(ACTIVE_GEMS[row.active]?.exclusive)row.active=null;row.supports=row.supports.map(id=>id&&compatible(row.active,id)?id:null);if(row.active&&!colorFits(w.sockets[0],row.active)){row.active=null;row.supports.fill(null)}row.supports=row.supports.map((id,i)=>id&&i+1<w.sockets.length&&i+1<w.linked&&colorFits(w.sockets[i+1],id)?id:null)}
-export function weaponReward(g,base){const tier=(g.round-1)*3+Math.ceil(g.wave/5);const b=base||WEAPON_BASES[Math.floor(g.rng()*WEAPON_BASES.length)],r=g.rng(),rarity=tier>=7&&r>.6?'epic':r>.4?'rare':'common';const power=8+tier*3+(rarity==='epic'?20:rarity==='rare'?10:0);const count=Math.min(4,2+(tier>=4?1:0)+(rarity==='epic'?1:0));const weapon={...b,slot:b.slot||'weapon',armor:b.slot==='cloak'?2+Math.floor(power/8):0,speed:b.slot==='legs'?Math.min(25,5+Math.floor(power/4)):0,id:`weapon-${g.round}-${g.nextId++}`,rarity,power,sockets:Array.from({length:count},(_,i)=>i===0?'W':['R','G','B'][Math.floor(g.rng()*3)]),linked:Math.min(count,2)};return{kind:'weapon',weapon,name:weapon.name,icon:b.icon,rarity,desc:`${b.bonus==='spell'?'法術':b.bonus==='projectile'?'投射物':b.bonus==='area'?'範圍':'命中'}傷害 +${power}% · ${count} 孔 / ${weapon.linked} 孔串連`}}
+export function weaponReward(g,base){const tier=(g.round-1)*3+Math.ceil(g.wave/5);const b=base||WEAPON_BASES[Math.floor(g.rng()*WEAPON_BASES.length)],r=g.rng(),rarity=tier>=7&&r>.6?'epic':r>.4?'rare':'common';const power=8+tier*3+(rarity==='epic'?20:rarity==='rare'?10:0);const count=Math.min(4,2+(tier>=4?1:0)+(rarity==='epic'?1:0));const weapon={...b,slot:b.slot||'weapon',armor:b.slot==='cloak'?2+Math.floor(power/8):0,speed:b.slot==='legs'?Math.min(25,5+Math.floor(power/4)):0,id:`weapon-${g.round}-${g.nextId++}`,rarity,power,sockets:Array.from({length:count},(_,i)=>i===0?'W':['R','G','B'][Math.floor(g.rng()*3)]),linked:Math.min(count,2)};rollAffixes(weapon,g.rng,tier);return{kind:'weapon',weapon,name:weapon.name,icon:b.icon,rarity,desc:`${b.bonus==='spell'?'法術':b.bonus==='projectile'?'投射物':b.bonus==='area'?'範圍':'命中'}傷害 +${power}% · ${count} 孔 / ${weapon.linked} 孔串連`}}
 export function rollLoot(g){
  const active=Object.keys(ACTIVE_GEMS).filter(id=>!ACTIVE_GEMS[id].exclusive&&!g.bag.active.includes(id)),support=Object.keys(SUPPORT_GEMS).filter(id=>!SUPPORT_GEMS[id].rarity&&!g.bag.support.includes(id));
  const choice=(ids,kind)=>{if(!ids.length)return{kind:'currency',name:'工匠通貨袋',icon:'◈',rarity:'rare',desc:'幻彩石 ×3、匠魂石 ×2、連結石 ×2'};const id=ids[Math.floor(g.rng()*ids.length)],a=(kind==='active'?ACTIVE_GEMS:SUPPORT_GEMS)[id];return{kind,id,name:a.name,icon:a.icon,rarity:g.wave===15?'epic':'rare',desc:`${SOCKET_COLORS[gemSocket(id)].name}色${kind==='active'?'主動':'輔助'}宝石 · ${a.desc}`}};
@@ -85,7 +86,7 @@ export function beginWave(g){
 }
 export function nextRound(g){
  if(g.state!=='forge'||!g.rewardTaken)return false;
- if(!g.links.some((r,i)=>r.active&&weaponFor(g,i)))return false;
+ if(!g.links.some((r,i)=>r.active&&!ACTIVE_GEMS[r.active]?.aura&&weaponFor(g,i)))return false;
  if(g.wave===WAVES_PER_ROUND){if(g.round>=TOTAL_ROUNDS)return false;g.round++;g.wave=1;g.roundTime=0}else g.wave++;
  beginWave(g);g.emit('nextRound');return true;
 }
