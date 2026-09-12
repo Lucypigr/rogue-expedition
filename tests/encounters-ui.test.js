@@ -15,7 +15,7 @@ test('larger finite packs respect quota and live enemy cap; later waves mix rang
 test('socket map distinguishes active, working support, disconnected and unopened positions',()=>{
  const w={sockets:['B','G','R'],linked:2},row={active:'fireball',supports:['multi',null,null]};
  const states=socketStates(w,row);
- assert.deepEqual(states.map(s=>s.status),['主動技能','輔助生效','未連結','未開孔']);
+ assert.deepEqual(states.map(s=>s.status),['主動技能','輔助生效','獨立空孔','未開孔']);
  assert.equal(states.filter(s=>s.powered).length,2);
  const html=socketDiagram(w,row);assert.match(html,/2 孔串連/);assert.match(html,/生效輔助 1 顆/);
  assert.equal((html.match(/socket-bridge connected/g)||[]).length,1);

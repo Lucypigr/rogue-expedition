@@ -58,9 +58,9 @@ Object.assign(ACTIVE_GEMS,{
  embertrail:{name:'焚燼足跡',icon:'♨',color:'#f6a365',socket:'R',trail:true,tags:['spell','area','duration','hit'],desc:'移動時留下 3 秒火焰，每半秒灼傷踩入的敵人。',damage:14,rate:3,radius:38,duration:3},
  frosttrail:{name:'霜行之徑',icon:'❄',color:'#9cdef4',socket:'B',trail:true,tags:['spell','area','duration','hit'],desc:'移動時留下 3 秒冰徑，傷害並緩速敵人 50%。',damage:9,rate:3,radius:42,duration:3,slow:.5},
  toxictrail:{name:'腐蝕步道',icon:'☣',color:'#afd779',socket:'G',trail:true,tags:['spell','area','duration','hit'],desc:'移動時留下 4 秒毒霧，踩入的敵人附加腐蝕。',damage:11,rate:2.5,radius:40,duration:4,poison:.18},
- swiftaura:{name:'疾行光環',icon:'↟',color:'#aed591',socket:'G',aura:{speed:35,damage:.75},tags:['aura'],desc:'手動開關：移速 +35%，造成傷害 -25%。占用一組主動孔，不接受輔助。',damage:0,rate:0},
- wrathaura:{name:'狂熱光環',icon:'✦',color:'#e28e7c',socket:'R',aura:{damage:1.45,armor:-4},tags:['aura'],desc:'手動開關：造成傷害 +45%，護甲 -4。占用一組主動孔，不接受輔助。',damage:0,rate:0},
- renewalaura:{name:'復甦光環',icon:'♥',color:'#91ccec',socket:'B',aura:{regen:4,speed:-18},tags:['aura'],desc:'手動開關：每秒回血 4 點，移速 -18%。占用一組主動孔，不接受輔助。',damage:0,rate:0},
+ swiftaura:{name:'疾行光環',icon:'↟',color:'#aed591',socket:'G',aura:{speed:35,damage:.75},tags:['aura'],desc:'手動開關：移速 +35%，造成傷害 -25%。占用一個自由孔，不接受輔助。',damage:0,rate:0},
+ wrathaura:{name:'狂熱光環',icon:'✦',color:'#e28e7c',socket:'R',aura:{damage:1.45,armor:-4},tags:['aura'],desc:'手動開關：造成傷害 +45%，護甲 -4。占用一個自由孔，不接受輔助。',damage:0,rate:0},
+ renewalaura:{name:'復甦光環',icon:'♥',color:'#91ccec',socket:'B',aura:{regen:4,speed:-18},tags:['aura'],desc:'手動開關：每秒回血 4 點，移速 -18%。占用一個自由孔，不接受輔助。',damage:0,rate:0},
  sunshot:{name:'烈日穿星',icon:'☀',color:'#f6bc70',socket:'R',tags:['spell','projectile','hit'],desc:'射出穿透 4 名敵人的烈日光矛。',damage:48,rate:.85,speed:460,pierce:4},
  thornburst:{name:'荊棘齊射',icon:'✣',color:'#b6d38b',socket:'G',tags:['projectile','hit'],desc:'同時射出 5 枚帶毒荊棘。',damage:12,rate:1.15,speed:340,count:5,poison:.15}
 });

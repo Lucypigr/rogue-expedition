@@ -1,16 +1,19 @@
-import {ACTIVE_GEMS,SUPPORT_GEMS,compatible} from './gems.js';
-import {SOCKET_COLORS,colorFits} from './progression.js';
-export function socketStates(w,row={active:null,supports:[]}){
+import {ACTIVE_GEMS,compatible} from './gems.js';
+import {socketGems,gemDefinition,gemTint,skillRows} from './socket-model.js';
+export function socketStates(w,row){
+ const gems=socketGems(row),skills=skillRows(row,w);
  return Array.from({length:4},(_,i)=>{
-  const open=i<w.sockets.length,connected=open&&i<w.linked,id=i===0?row.active:row.supports[i-1];
-  const powered=!!id&&connected&&colorFits(w.sockets[i],id)&&(i===0||!!row.active&&compatible(row.active,id));
-  return {index:i,open,connected,id,powered,color:w.sockets[i],status:!open?'未開孔':!connected?'未連結':i===0?(id?'主動技能':'主動空孔'):powered?'輔助生效':!row.active?'待裝主動':id?'寶石不符':'已連結・空孔'};
+  const open=i<w.sockets.length,connected=open&&i<w.linked,gem=gems[i],id=gem?.id;
+  const powered=open&&!!gem&&(gem.kind==='active'||skills.some(s=>s.supports.includes(id)));
+  const status=!open?'未開孔':gem?.kind==='active'?(ACTIVE_GEMS[id]?.aura?'光環':'主動技能'):gem?powered?'輔助生效':'輔助未生效':connected?'已連結・空孔':'獨立空孔';
+  return {index:i,open,connected,gem,id,powered,color:w.sockets[i],status};
  });
 }
-export function socketDiagram(w,row){
- const states=socketStates(w,row),active=states.filter(s=>s.index>0&&s.powered).length;
- return `<div class="socket-map"><div class="socket-map-heading"><strong>${w.linked} 孔串連</strong><span>${w.sockets.length} / 4 孔已開啟</span></div><div class="socket-path" aria-label="孔洞串連狀態">${states.map((s,i)=>{
- const gem=ACTIVE_GEMS[s.id]||SUPPORT_GEMS[s.id],link=i>0?`<span aria-label="${s.connected?'已連結':s.open?'未連結':'未開孔'}" class="socket-bridge ${s.connected?'connected':'broken'}">${s.connected?'∞':'×'}</span>`:'';
- return link+`<div class="socket-node ${!s.open?'sealed':!s.connected?'detached':s.powered?'powered':'connected'}" style="--socket:${SOCKET_COLORS[s.color]?.hex||'#6d7880'}"><small>${i===0?'主動':'輔助 '+i}</small><span class="socket-orb" title="${gem?.name||s.status}">${!s.open?'＋':gem?.icon||s.color}</span><b>${s.status}</b><small>${s.open?SOCKET_COLORS[s.color].name+'孔':'匠魂石開孔'}</small></div>`;
- }).join('')}</div><p class="socket-summary">${row?.active?'生效輔助 '+active+' 顆 · 僅強化本組主動技能':'先裝入主動寶石，再配置相連的輔助孔。'}</p></div>`;
+export function socketDiagram(w,row,index=null){
+ const states=socketStates(w,row),active=states.filter(s=>s.gem?.kind==='support'&&s.powered).length;
+ return '<div class="socket-map"><div class="socket-map-heading"><strong>'+w.linked+' 孔串連</strong><span>'+w.sockets.length+' / 4 自由孔</span></div><div class="socket-path" aria-label="自由孔洞串連狀態">'+states.map((s,i)=>{
+ const gem=gemDefinition(s.gem),bridge=i>0?'<span class="socket-bridge '+(s.connected?'connected':'broken')+'" aria-label="'+(s.connected?'已連結':'未連結')+'">'+(s.connected?'∞':'×')+'</span>':'';
+ const tag=index===null?'div':'button',attrs=index===null?'':' type="button" data-pick-row="'+index+'" data-pick-socket="'+i+'" '+(!s.open||w.intrinsic&&i===0?'disabled':'');
+ return bridge+'<'+tag+attrs+' class="socket-node '+(!s.open?'sealed':s.powered?'powered':'detached')+'" style="--socket:'+gemTint(s.gem)+'"><small>孔 '+(i+1)+'</small><span class="socket-orb">'+(!s.open?'＋':gem?.icon||'◇')+'</span><b>'+s.status+'</b><small>'+(w.intrinsic&&i===0?'專屬固定':gem?.name||'不限顏色')+'</small></'+tag+'>';
+ }).join('')+'</div><p class="socket-summary">生效輔助 '+active+' 顆 · 金鏈內共享相容輔助；獨立孔可施放技能或光環。</p></div>';
 }
