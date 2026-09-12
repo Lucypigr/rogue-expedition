@@ -1,3 +1,4 @@
+import {socketGems} from '../dist/js/socket-model.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Game} from '../dist/js/engine.js';
@@ -23,10 +24,10 @@ test('legendary branch spends once, spend once and never grant duplicate gems',(
 });
 test('legendary skill is fixed, supports work, and replacing weapon removes intrinsic',()=>{
  const g=fresh(),w=makeLegendary(g,0);stashEquipment(g,w);const i=g.equipped.indexOf(w.id);
- assert.equal(g.links[i].active,'phoenix');assert.equal(g.configure(i,'active',0,'fireball').ok,false);assert.equal(g.configure(i,'active',0,null).ok,false);
+ assert.equal(socketGems(g.links[i])[0]?.id,'phoenix');assert.equal(g.configure(i,'active',0,'fireball').ok,false);assert.equal(g.configure(i,'active',0,null).ok,false);
  g.bag.support.push('dominion');assert.equal(g.configure(i,'support',0,'dominion').ok,true);
- assert.equal(g.craft(w.id,'recolor',{index:0,color:'R'}).ok,false);g.bag.currency.chromatic=10;assert.equal(g.craft(w.id,'reroll').ok,true);assert.equal(w.sockets[0],'W');assert.equal(g.links[i].active,'phoenix');
- const normal={...g.bag.weapons[0],id:'spare',sockets:['W','W']};g.bag.weapons.push(normal);assert.equal(g.equip(i,'spare').ok,true);assert.equal(g.links[i].active,null);
+ assert.equal(g.craft(w.id,'recolor',{index:0,color:'R'}).ok,false);g.bag.currency.chromatic=10;assert.equal(g.craft(w.id,'reroll').ok,true);assert.equal(w.sockets[0],'W');assert.equal(socketGems(g.links[i])[0]?.id,'phoenix');
+ const normal={...g.bag.weapons[0],id:'spare',sockets:['W','W']};g.bag.weapons.push(normal);assert.equal(g.equip(i,'spare').ok,true);assert.equal(socketGems(g.links[i])[0],null);
 });
 test('phoenix damages and heals, legendary support adds ten real projectiles',()=>{
  const g=fresh();g.state='playing';g.player.hp=20;const e=g.spawn('brute',1300,1200);e.hp=10000;

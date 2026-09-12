@@ -1,3 +1,4 @@
+import {equippedSkills} from './socket-model.js';
 import {weaponFor} from './progression.js';
 import {castAdvanced,updateAdvanced} from './advanced-combat.js';
 import {isBoss} from './monsters.js';
@@ -55,11 +56,13 @@ export function castSkill(game,s){
  p.cast=.15;game.emit('sound','cast');return true;
 }
 export function updateCasting(game,dt){
- for(let i=0;i<game.links.length;i++){
-   if(!game.links[i].active)continue;game.castClocks[i]=(game.castClocks[i]??0)-dt;
-   const s=compileSkill(game.links[i],game.player,game.gemLevels,weaponFor(game,i));
-   if(game.castClocks[i]<=0&&castSkill(game,s)){
-     if(game.state!=='playing')return;game.castClocks[i]=1/s.rate;
+ for(const row of equippedSkills(game)){
+   const legacy=!game.links[row.index].sockets;
+   const clocks=legacy?game.castClocks:(game.socketClocks??={}),key=legacy?row.index:row.key;
+   clocks[key]=(clocks[key]??0)-dt;
+   const s=compileSkill(row,game.player,game.gemLevels,row.weapon);
+   if(clocks[key]<=0&&castSkill(game,s)){
+     if(game.state!=='playing')return;clocks[key]=1/s.rate;
      if(s.echo&&game.echoes.length<30)game.echoes.push({timer:.22,skill:{...s,echo:false}});
    }
  }

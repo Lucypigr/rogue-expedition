@@ -35,3 +35,15 @@
 
 .aura-controls{position:absolute;top:170px;right:18px;display:flex;flex-direction:column;gap:6px;max-width:190px;z-index:2}.aura-controls:empty{display:none}.aura-controls button{min-height:44px;padding:9px 12px;border:1px solid #67796a;border-radius:6px;background:#11251eee;color:var(--aura);font-size:13px;text-align:left;touch-action:manipulation}.aura-controls button.on{border-color:var(--aura);box-shadow:inset 3px 0 var(--aura);background:#294135ee}.affix-list{border-top:1px solid #69806555;padding-top:8px;margin-top:10px}.affix-list p{margin:4px 0;color:#b8d9ed;font-size:13px;line-height:1.6}.affix-list p span{color:#b7a785;font-size:11px;margin-right:6px}.link-card button[data-aura]{min-height:44px;width:100%;margin-top:12px;border:1px solid var(--gem-color);border-radius:5px;background:#18352b;color:var(--gem-color)}.link-card button[data-aura][aria-pressed=true]{background:#395242}
 @media(max-width:600px){.aura-controls{top:160px;right:8px;max-width:148px;gap:4px}.aura-controls button{font-size:12px;padding:8px;min-height:44px}}
+
+/* Free socket touch editor */
+button.socket-node{min-width:0;min-height:100px;padding:8px 3px;background:#142b24;border:1px solid #687e70;border-radius:8px;cursor:pointer;touch-action:manipulation;color:#ded5be;flex:1}
+button.socket-node:focus-visible{outline:3px solid #f5d18d;outline-offset:3px}
+button.socket-node:disabled{opacity:.5;cursor:default}
+.socket-node small,.socket-node b{overflow-wrap:anywhere;white-space:normal}
+.gem-picker{margin-top:16px;padding:12px;background:#10221e;border:1px solid #8e805c;border-radius:8px}
+.gem-picks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+.gem-picks button{min-height:72px;padding:12px;text-align:left;background:#203a31;border:1px solid currentColor;border-radius:6px;touch-action:manipulation}
+.gem-picks button:disabled{opacity:.4}.gem-picks small,.gem-picks span{display:block;margin-top:5px;font-size:12px}
+.gem-picks span{color:#ccd2c6;line-height:1.5}
+@media(max-width:600px){.gem-picks{grid-template-columns:1fr}.socket-path{gap:2px}.socket-bridge{flex:0 0 12px}.socket-node b,.socket-node small{font-size:10px}}

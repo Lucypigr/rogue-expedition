@@ -8,13 +8,13 @@ Run `npm start` and open http://localhost:8080. The root page forwards to `dist/
 Desktop: WASD/arrows move, Space dashes, Escape/P pauses, B opens inventory. Mobile: touch joystick, dash button, ◈ inventory.
 
 - Start with exactly one Fireball gem and a two-socket staff. Each run resets gems, equipment and currency.
-- Every level pauses combat for three distinct gem choices. Click/tap or press 1–3 to choose, then equip through inventory. Unowned gems are prioritized.
+- Every level pauses combat for three growth choices: refine an owned attack gem or take crafting currency. New ordinary gems come from monster ground drops.
 - Active rewards grant 1/2/3 refinement levels for common/rare/epic, each adding 12% base damage. Support effects depend on the gem, independent of rarity. Once all gems are owned, active refinements remain available.
-- A run has exactly 3 rounds of 15 waves. Normal waves contain a finite enemy quota and advance only after all enemies die. Waves 5, 10 and 15 contain a boss. Boss XP is collected immediately; resulting level rewards resolve before the separate weapon/active/support boss choice.
-- Independent equipment drop chance per kill: normal 3%, boss 80%, additional to boss reward choices. Drops automatically enter inventory and auto-equip an empty matching slot; gems require manual placement.
-- Three weapon slots, a cloak and leg armor each support one active plus up to three linked supports. Cloaks grant armor, legs grant movement speed, and equipment grants damage to matching skill tags.
-- White sockets accept all colors; other sockets require matching gem colors. Supports require compatible tags and a connection to the first socket. Each named gem may occupy only one group.
-- Every fifth wave's boss victory unlocks crafting for all equipment: add socket (2 Jeweller), add link (2 Fusing), random colors (1 Chromatic), targeted color (2 Chromatic). Maximum four sockets. Invalidated gems safely return to inventory.
+- A run has exactly 3 rounds of 15 waves. Normal waves contain a finite enemy quota and advance only after all enemies die. Waves 5, 10 and 15 contain a boss. Boss XP is collected immediately; resulting level rewards resolve before the separate equipment/currency boss choice.
+- Independent equipment drop chance per kill: normal 3%, boss 80%, additional to boss reward choices. Drops remain on the ground with a beam and label until approached. Picked-up equipment can auto-equip an empty matching slot; gems require manual placement.
+- Three weapon slots, a cloak and leg armor each support up to four freely placed active, support or aura gems. Cloaks grant armor, legs grant movement speed, and equipment grants damage to matching skill tags.
+- All socket colors accept all gem colors. Compatible supports affect every active in the same linked group. Unlinked active skills and auras work independently. Each typed gem may be equipped once.
+- Every fifth wave's boss victory unlocks crafting for all equipment: add socket (2 Jeweller), add link (2 Fusing), random colors (1 Chromatic), targeted color (2 Chromatic). Maximum four sockets. Socket colors are cosmetic; recoloring never removes gems.
 - Continue within the same round after waves 5/10. Wave 15 advances to the next round; only round 3 wave 15 allows expedition completion. Inventory holds 40 pieces; oldest unequipped spares recycle into two Jeweller when full. The latest eight drops appear in inventory.
 
 ## Architecture
@@ -52,7 +52,7 @@ Physical-device touch and browser-specific audio still require device verificati
 
 Normal waves now range from 22 to 56 enemies, spawning in packs of 6/8/10 according to round. Boss waves add 9/12/15 finite reinforcements; boss defeat disperses remaining guards. Boss HP is increased 30% and damage raised. Wave budget, composition and pacing live in `encounters.js`. Entity caps remain unchanged. The HUD includes remaining scheduled/live enemies.
 
-Socket maps always display all four positions. Thick gold links mean connected to the active socket, broken links mean inactive, and dashed square sockets mean not yet opened. Text labels distinguish empty connected sockets from working support gems; the count describes linked sockets rather than incorrectly counting edges. Crafting previews use the same socket-state model as inventory.
+Socket maps always display all four positions. Thick gold links indicate a shared support group, broken links mean inactive, and dashed square sockets mean not yet opened. Text labels distinguish empty connected sockets from working support gems; the count describes linked sockets rather than incorrectly counting edges. Crafting previews use the same socket-state model as inventory.
 
 Figma inspection was blocked by the Starter MCP rate limit. Canva infographic generation was rejected because the connected endpoint accepts only document/email types. This update's UI was therefore implemented directly in HTML/CSS, with no claim of exported Figma/Canva artwork.
 
@@ -62,7 +62,7 @@ Equipment, Backpack and Shop are separate tabs. Equipment retains socket craftin
 
 Threshold tickets cost 180 gold. Each ticket rolls legendary 3%, epic weapon 12%, rare weapon 30%, common weapon 55%. Within the legendary branch only, weapon and unowned legendary support each have 50% weight, uniformly within their category. After all legendary supports are collected, the 3% legendary branch gives weapons; its total probability does not increase. No real-money transactions. Gold, tickets and shop state reset each run.
 
-Legendary weapons: Phoenix staff (180 base area damage and 12% maximum-health healing), Astral bow (five piercing arrows), Judgment hammer (260 base area damage and 70% slow). Each has an immutable intrinsic active, four linked white sockets and +50% matching hit damage; auxiliary sockets accept compatible supports. The fixed first socket cannot be recolored. Duplicate intrinsic weapons cannot be equipped simultaneously. Phoenix visuals use a system emoji with flame effects; rendering varies by platform.
+Legendary weapons: Phoenix staff (180 base area damage and 12% maximum-health healing), Astral bow (five piercing arrows), Judgment hammer (260 base area damage and 70% slow). Each has an immutable intrinsic active, four linked white sockets and +50% matching hit damage; remaining sockets accept any ordinary gem. The fixed first socket cannot be recolored. Duplicate intrinsic weapons cannot be equipped simultaneously. Phoenix visuals use a system emoji with flame effects; rendering varies by platform.
 
 Legendary supports: Infinity adds 10 projectiles without penalty, Dominion triples hit damage, Eternity adds eight chains and 50% cast rate. These rewards are exclusive to the shop lottery; normal level/boss pools exclude them. Projectile and effect caps still apply to extreme builds.
 
@@ -74,7 +74,15 @@ Eleven normal enemy types now include a telegraphed long-range sniper, a proximi
 
 - Gem names use their red/green/blue/white socket color throughout rewards, equipment and inventory.
 - New active gems: Ember Trail, Frost Trail, Toxic Trail, Swift Aura, Wrath Aura, Renewal Aura, Sunshot and Thornburst. New supports: Heavy, Wide, Lingering and Siphon. Trails are emitted only while moving and use bounded, timed area effects.
-- Equip an aura into an active socket, then toggle it with the arena or equipment button. Auras start off: Swift grants +35% movement and 25% less damage; Wrath grants 45% more damage and -4 armor; Renewal grants 4 HP/s and -18% movement. Effects end when disabled or unequipped. Auras do not accept supports or damage refinements.
+- Equip an aura into any opened socket, then toggle it with the arena or equipment button. Auras start off: Swift grants +35% movement and 25% less damage; Wrath grants 45% more damage and -4 armor; Renewal grants 4 HP/s and -18% movement. Effects end when disabled or unequipped. Auras do not accept supports or damage refinements.
 - Ordinary weapons have no affixes; rare weapons roll one prefix and suffix, epic weapons two each. Legendary weapons retain fixed exclusive powers. Eight affix families cover damage, spell/projectile damage, flat damage, cast speed, critical chance, armor and movement speed. Each family occurs at most once per item. Tier progresses from T3 to T1 with encounter stage.
 - Damage/cast/critical affixes apply only to the equipped weapon's skill group; armor/movement affixes affect the character. Item cards expose each affix, tier and value before equipping or buying.
 - `affixes.js` owns rolling and display; `auras.js` derives temporary bonuses; `aura-ui.js` supplies accessible toggle controls.
+
+## Free sockets and ground loot
+
+Click/tap any opened socket, then a gem card to install it. Choose 取下此孔寶石 to remove it. Multiple actives share compatible linked supports; disconnected supports stay installed but inactive. Auras occupy one socket. Gem color is informational. The legendary intrinsic first socket remains fixed.
+
+Ordinary gem drops: normal 5%, boss 35%, independently of gear drops. Walk near beams to collect. Duplicate attack gems refine once; duplicate supports/auras become one Jeweller. Loot persists across waves, resets with a new run. Linked grouping retains the existing prefix representation: first `linked` sockets share effects, remaining sockets are independent.
+
+See docs/GAME_DESIGN.md for chain behavior, docs/ARCHITECTURE.md for implementation, and CHANGELOG.md for validation limits.

@@ -1,3 +1,4 @@
+import {drawGroundLoot} from './ground-loot.js';
 import {drawHealingPools} from './healing-pools.js';
 import {drawExtraEnemy,drawGemEffects} from './extra-render.js';
 import {isBoss} from './monsters.js';
@@ -21,7 +22,7 @@ export class Renderer{
  }
  draw(game,clock){if(this.seed!==game.seed)this.buildTerrain(game.world);const c=this.ctx,p=game.player,w=this.w,h=this.h,z=this.zoom;this.camera.x=clamp(p.x,w/z/2,WORLD_SIZE-w/z/2);this.camera.y=clamp(p.y,h/z/2,WORLD_SIZE-h/z/2);const cam=this.camera;c.setTransform(this.dpr,0,0,this.dpr,0,0);c.fillStyle='#16281e';c.fillRect(0,0,w,h);c.save();c.translate(w/2+(Math.random()-.5)*game.shake,h/2+(Math.random()-.5)*game.shake);c.scale(z,z);c.translate(-cam.x,-cam.y);const left=cam.x-w/z/2,top=cam.y-h/z/2;c.drawImage(this.tile,Math.max(0,left),Math.max(0,top),Math.min(WORLD_SIZE,w/z),Math.min(WORLD_SIZE,h/z),Math.max(0,left),Math.max(0,top),Math.min(WORLD_SIZE,w/z),Math.min(WORLD_SIZE,h/z));
  const visible=(o,r=100)=>Math.abs(o.x-cam.x)<w/z/2+r&&Math.abs(o.y-cam.y)<h/z/2+r;
- drawHealingPools(c,game,clock,visible);
+ drawHealingPools(c,game,clock,visible);drawGroundLoot(c,game,clock,visible);
  for(const g of game.gems){if(!visible(g,15))continue;const bob=Math.sin(clock*3+g.x)*2;glow(c,g.x,g.y,17,g.heal?'#e19b7555':'#bed78433');poly(c,[[g.x,g.y-6+bob],[g.x+4,g.y+bob],[g.x,g.y+6+bob],[g.x-4,g.y+bob]],g.heal?'#e9987f':g.value>7?'#c1dca0':'#b7c783','#dce6ad')}
  for(const zone of game.zones){c.strokeStyle=zone.color||(zone.active?'#ffa96b':'#e6866577');c.fillStyle=zone.color?zone.color+(zone.active?'55':'20'):(zone.active?'#e88a4d66':'#d8583820');c.lineWidth=2;c.beginPath();c.arc(zone.x,zone.y,zone.r,0,TAU);c.fill();c.stroke();if(!zone.active){c.beginPath();c.arc(zone.x,zone.y,zone.r*clamp(1-zone.timer/1.1,0,1),0,TAU);c.stroke()}}
  const drawables=[...game.world.obstacles.filter(o=>visible(o)),...game.enemies.filter(e=>visible(e)),{...p,type:'player',player:p}].sort((a,b)=>a.y-b.y);
