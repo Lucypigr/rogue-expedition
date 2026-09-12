@@ -43,6 +43,16 @@ Object.assign(SUPPORT_GEMS,{
  chill:{name:'冰緩',icon:'❄',socket:'B',tags:['hit'],desc:'命中使敵人緩速至少 40%，持續 2 秒。',apply:s=>s.slow=Math.max(s.slow,.4)},
  empower:{name:'強化',icon:'✦',socket:'R',tags:['hit'],desc:'每次命中傷害增加 25%。',apply:s=>s.damage*=1.25}
 });
+Object.assign(ACTIVE_GEMS,{
+ phoenix:{name:'不死鳥降臨',icon:'✹',exclusive:true,color:'#ffb653',socket:'W',tags:['spell','area','hit'],desc:'鳳凰降臨造成範圍傷害，並回復最大生命 12%。',damage:180,rate:.25,radius:300},
+ astral:{name:'星界萬箭',icon:'✧',exclusive:true,color:'#dec5ff',socket:'W',tags:['projectile','hit'],desc:'射出 5 枚穿透星矢。',damage:65,rate:1.1,speed:450,count:5,pierce:3},
+ judgment:{name:'雷神天罰',icon:'ϟ',exclusive:true,color:'#b7dfff',socket:'W',tags:['spell','area','hit'],desc:'雷霆重擊周圍敵人並緩速 70%。',damage:260,rate:.35,radius:260,slow:.7}
+});
+Object.assign(SUPPORT_GEMS,{
+ infinity:{name:'無盡投射',icon:'∞',rarity:'legendary',socket:'G',tags:['projectile'],desc:'額外 +10 顆投射物，沒有傷害懲罰。',apply:s=>{s.count+=10}},
+ dominion:{name:'神域之力',icon:'✦',rarity:'legendary',socket:'R',tags:['hit'],desc:'命中傷害提升至 3 倍。',apply:s=>{s.damage*=3}},
+ eternity:{name:'永恆連鎖',icon:'⌁',rarity:'legendary',socket:'B',tags:['projectile','chain'],desc:'額外連鎖 8 次，施放頻率 +50%。',apply:s=>{s.chain+=8;s.rate*=1.5}}
+});
 for(const [id,g] of Object.entries(ACTIVE_GEMS))g.socket??=id==='orbit'?'G':'B';
 for(const [id,g] of Object.entries(SUPPORT_GEMS))g.socket??=['multi','pierce','fork','chain','execute'].includes(id)?'G':['burn','leech'].includes(id)?'R':'B';
 export const DEFAULT_LINKS=[{active:'fireball',supports:[null,null,null]},{active:null,supports:[null,null,null]},{active:null,supports:[null,null,null]}];

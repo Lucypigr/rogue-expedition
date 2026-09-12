@@ -29,7 +29,12 @@ export function castSkill(game,s){
    for(let i=0;i<2;i++){const a=game.time*2.6+i*Math.PI,point={x:p.x+Math.cos(a)*s.radius,y:p.y+Math.sin(a)*s.radius};for(const e of game.enemies)if(e.hp>0&&distance(point,e)<e.r+15)damageWithEffects(game,e,s.damage,s)}return true;
  }
  if(!target)return false;
- if(castAdvanced(game,s,target,projectile,effect,damageWithEffects)){}else if(s.id==='fireball'||s.id==='ice'){
+ if(s.id==='phoenix'||s.id==='judgment'){
+   effect(game,{type:'ring',x:p.x,y:p.y,r:s.radius,life:.8,max:.8,color:s.color});
+   if(s.id==='phoenix'){effect(game,{type:'phoenix',x:p.x,y:p.y,tx:target.x,ty:target.y,life:1.2,max:1.2,color:s.color});p.hp=Math.min(p.maxHp,p.hp+p.maxHp*.12);game.texts.push({x:p.x,y:p.y-40,text:'鳳凰降臨 +'+Math.round(p.maxHp*.12),life:1,color:'#ffd78a'});for(let i=0;i<5;i++){const a=i*Math.PI*2/5;effect(game,{type:'arc',x:p.x,y:p.y,tx:p.x+Math.cos(a)*s.radius,ty:p.y+Math.sin(a)*s.radius,life:.7,max:.7,color:s.color})}}
+   game.burst(p.x,p.y,s.color,30);game.shake=5;
+   for(const e of [...game.enemies])if(e.hp>0&&distance(p,e)<s.radius+e.r)damageWithEffects(game,e,s.damage,s);
+ }else if(castAdvanced(game,s,target,projectile,effect,damageWithEffects)){}else if(s.id==='fireball'||s.id==='ice'||s.id==='astral'){
    const a=Math.atan2(target.y-p.y,target.x-p.x);
    for(let i=0;i<s.count;i++)projectile(game,s,p.x,p.y-7,a+(i-(s.count-1)/2)*.17);
  }else if(s.id==='arc'){

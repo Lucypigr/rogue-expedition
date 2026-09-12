@@ -28,7 +28,8 @@ export function drawGemEffects(c,game){
 
  for(const m of game.meteors){c.strokeStyle=m.skill.color;c.lineWidth=2;c.setLineDash([5,5]);c.beginPath();c.arc(m.x,m.y,m.skill.radius,0,TAU);c.stroke();c.setLineDash([]);const y=m.y-m.timer*190;circle(c,m.x,y,9,m.skill.color);c.strokeStyle=m.skill.color;c.beginPath();c.moveTo(m.x,y);c.lineTo(m.x+25,y-60);c.stroke()}
  for(const fx of game.effects){c.save();c.globalAlpha=Math.max(0,fx.life/fx.max);c.strokeStyle=fx.color;c.lineWidth=fx.type==='arc'?3:2;
-  if(fx.type==='arc'){c.beginPath();c.moveTo(fx.x,fx.y);for(let i=1;i<6;i++){const t=i/6;c.lineTo(fx.x+(fx.tx-fx.x)*t+(i%2?8:-8),fx.y+(fx.ty-fx.y)*t)}c.lineTo(fx.tx,fx.ty);c.stroke();c.strokeStyle='#effaff';c.lineWidth=1;c.stroke()}
+  if(fx.type==='phoenix'){const t=1-fx.life/fx.max;c.font='46px "Segoe UI Emoji", "Apple Color Emoji", sans-serif';c.textAlign='center';c.shadowColor='#ff9b38';c.shadowBlur=20;c.fillText('🐦‍🔥',fx.x+(fx.tx-fx.x)*t,fx.y+(fx.ty-fx.y)*t-25-Math.sin(t*Math.PI)*45)}
+  else if(fx.type==='arc'){c.beginPath();c.moveTo(fx.x,fx.y);for(let i=1;i<6;i++){const t=i/6;c.lineTo(fx.x+(fx.tx-fx.x)*t+(i%2?8:-8),fx.y+(fx.ty-fx.y)*t)}c.lineTo(fx.tx,fx.ty);c.stroke();c.strokeStyle='#effaff';c.lineWidth=1;c.stroke()}
   else{const r=fx.r*(1-fx.life/fx.max*.6);c.beginPath();c.arc(fx.x,fx.y,r,0,TAU);c.stroke();if(fx.type==='impact'){c.fillStyle=fx.color;c.globalAlpha*=.22;c.fill()}}
   c.restore();
  }

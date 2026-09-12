@@ -55,3 +55,13 @@ Normal waves now range from 22 to 56 enemies, spawning in packs of 6/8/10 accord
 Socket maps always display all four positions. Thick gold links mean connected to the active socket, broken links mean inactive, and dashed square sockets mean not yet opened. Text labels distinguish empty connected sockets from working support gems; the count describes linked sockets rather than incorrectly counting edges. Crafting previews use the same socket-state model as inventory.
 
 Figma inspection was blocked by the Starter MCP rate limit. Canva infographic generation was rejected because the connected endpoint accepts only document/email types. This update's UI was therefore implemented directly in HTML/CSS, with no claim of exported Figma/Canva artwork.
+
+## Inventory and legendary shop
+
+Equipment, Backpack and Shop are separate tabs. Equipment retains socket crafting; Backpack lists gear and gem collections. Boss camps open the shop. Each kill grants 5 gold, bosses 150. Stock refreshes once per checkpoint. Equipped items cannot be sold. Buying and drawing reject full inventories before charging.
+
+Threshold tickets cost 180 gold. One ticket guarantees a legendary reward: 50% weapon / 50% unowned legendary support, uniformly within the category. After all three supports are collected, every draw gives a weapon. No real-money transactions. Gold, tickets and shop state reset each run.
+
+Legendary weapons: Phoenix staff (180 base area damage and 12% maximum-health healing), Astral bow (five piercing arrows), Judgment hammer (260 base area damage and 70% slow). Each has an immutable intrinsic active, four linked white sockets and +50% matching hit damage; auxiliary sockets accept compatible supports. The fixed first socket cannot be recolored. Duplicate intrinsic weapons cannot be equipped simultaneously. Phoenix visuals use a system emoji with flame effects; rendering varies by platform.
+
+Legendary supports: Infinity adds 10 projectiles without penalty, Dominion triples hit damage, Eternity adds eight chains and 50% cast rate. These rewards are exclusive to the shop lottery; normal level/boss pools exclude them. Projectile and effect caps still apply to extreme builds.
