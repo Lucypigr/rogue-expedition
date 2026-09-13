@@ -1,3 +1,4 @@
+import {equippedSkills} from './socket-model.js';
 import {compileSkill,ACTIVE_GEMS,gemColor} from './gems.js';
 const TAU=Math.PI*2;
 function poly(c,p,color){c.fillStyle=color;c.beginPath();p.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.closePath();c.fill()}
@@ -24,7 +25,7 @@ export function drawExtraEnemy(c,e,clock){
  c.restore();return true;
 }
 export function drawGemEffects(c,game){
- for(const row of game.links){if(!ACTIVE_GEMS[row.active]?.aura||!game.auras[row.active])continue;c.save();c.strokeStyle=gemColor(row.active);c.globalAlpha=.55;c.lineWidth=2;c.beginPath();c.ellipse(game.player.x,game.player.y+5,65,35,game.time*.15,0,TAU);c.stroke();c.restore()}
+ for(const row of equippedSkills(game)){if(!ACTIVE_GEMS[row.active]?.aura||!game.auras[row.active])continue;c.save();c.strokeStyle=gemColor(row.active);c.globalAlpha=.55;c.lineWidth=2;c.beginPath();c.ellipse(game.player.x,game.player.y+5,65,35,game.time*.15,0,TAU);c.stroke();c.restore()}
  for(const f of game.fields||[]){c.save();c.globalAlpha=.25;c.fillStyle=f.skill.color;c.beginPath();c.arc(f.x,f.y,f.skill.radius,0,TAU);c.fill();c.globalAlpha=.8;c.strokeStyle=f.skill.color;c.lineWidth=2;c.beginPath();c.arc(f.x,f.y,f.type==='ball'?18:f.skill.radius*.7,game.time,game.time+5);c.stroke();c.restore()}
  for(const t of game.totems||[]){poly(c,[[t.x-10,t.y+5],[t.x-8,t.y-20],[t.x+8,t.y-20],[t.x+10,t.y+5]],'#b89a62');circle(c,t.x,t.y-25,7,'#efb86c')}
 
@@ -35,5 +36,5 @@ export function drawGemEffects(c,game){
   else{const r=fx.r*(1-fx.life/fx.max*.6);c.beginPath();c.arc(fx.x,fx.y,r,0,TAU);c.stroke();if(fx.type==='impact'){c.fillStyle=fx.color;c.globalAlpha*=.22;c.fill()}}
   c.restore();
  }
- for(const row of game.links){if(row.active!=='orbit')continue;const s=compileSkill(row,game.player,game.gemLevels);for(let i=0;i<2;i++){const a=game.time*2.6+i*Math.PI,x=game.player.x+Math.cos(a)*s.radius,y=game.player.y+Math.sin(a)*s.radius;c.save();c.translate(x,y);c.rotate(a);poly(c,[[0,-17],[7,-3],[3,16],[-4,3]],s.color);c.restore()}}
+ for(const row of equippedSkills(game)){if(row.active!=='orbit')continue;const s=compileSkill(row,game.player,game.gemLevels,row.weapon);for(let i=0;i<2;i++){const a=game.time*2.6+i*Math.PI,x=game.player.x+Math.cos(a)*s.radius,y=game.player.y+Math.sin(a)*s.radius;c.save();c.translate(x,y);c.rotate(a);poly(c,[[0,-17],[7,-3],[3,16],[-4,3]],s.color);c.restore()}}
 }
